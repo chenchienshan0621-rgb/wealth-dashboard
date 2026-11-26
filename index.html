@@ -697,10 +697,10 @@
           <div>
             <label>② 高點回檔低接門檻</label>
             <select id="dipBuyPct" onchange="updateTabDCA()">
-              <option value="15" selected>回檔 ≥ 15% 倒回低接</option>
-              <option value="10">回檔 ≥ 10% 積極低接</option>
-              <option value="20">回檔 ≥ 20% 熊市深跌低接</option>
-              <option value="0">關閉（現金只出不進）</option>
+              <option value="10" selected>分3批(3:5:2)：每跌 10% 加碼 (-10%/-20%/-30%)</option>
+              <option value="8">分3批(3:5:2)：每跌 8% 加碼 (-8%/-16%/-24%)</option>
+              <option value="12">分3批(3:5:2)：每跌 12% 加碼 (-12%/-24%/-36%)</option>
+              <option value="0">關閉（落袋現金只出不進）</option>
             </select>
           </div>
         </div>
@@ -1701,7 +1701,7 @@
     const reqMonths = Math.min(180, Math.max(12, parseInt(document.getElementById('dcaMonths').value, 10) || 108));
     const targetPct = Math.max(1, parseFloat(document.getElementById('tpTarget').value) || 20) / 100;
     const sellRatio = Math.min(1, Math.max(0.1, (parseFloat(document.getElementById('tpSellRatio').value) || 50) / 100));
-    const dipBuyPct = Math.max(0, parseFloat(document.getElementById('dipBuyPct').value) || 0) / 100;
+    const dipStepPct = Math.max(0, parseFloat(document.getElementById('dipBuyPct').value) || 0) / 100;
     const useMaGuard = document.getElementById('useMaGuard').checked;
     const scenario = document.getElementById('marketScenario').value;
     const infoBox = document.getElementById('dcaRealInfo');
@@ -1719,7 +1719,7 @@
           infoBox.style.background = '#eff6ff';
           infoBox.style.borderColor = '#bfdbfe';
           infoBox.style.color = '#1e40af';
-          infoBox.innerHTML = `⏳ 正在連線抓取 <strong>${labelTitle}</strong> 真實歷史月線走勢...`;
+          infoBox.innerHTML = '⏳ 正在連線抓取 <strong>' + labelTitle + '</strong> 真實歷史月線走勢...';
         }
         loadRealEtfMonthly(code).then(data => {
           if (data) {
@@ -1728,7 +1728,7 @@
             infoBox.style.background = '#fffbeb';
             infoBox.style.borderColor = '#fde68a';
             infoBox.style.color = '#92400e';
-            infoBox.innerHTML = `⚠️ 目前無法連線抓取 ${labelTitle} 歷史報價（請檢查網路連線，或改選下方模擬劇本）。`;
+            infoBox.innerHTML = '⚠️ 目前無法連線抓取 ' + labelTitle + ' 歷史報價（請檢查網路連線，或改選下方模擬劇本）。';
           }
         });
         return;
@@ -1747,7 +1747,7 @@
           p = trend * (1 - 0.32 * Math.exp(-0.5 * dist * dist)) + 3 * Math.sin(m / 2.5);
         } else p = 100 + 18 * Math.sin(m / 4.2) + 6 * Math.cos(m / 2);
         const dt = new Date(now.getFullYear(), now.getMonth() - (reqMonths - 1 - m), 1);
-        const ym = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`;
+        const ym = dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0');
         series.push({ date: ym, price: Math.max(30, p) });
       }
       labelTitle = '模擬情境淨值';
@@ -1758,13 +1758,20 @@
     let optShares = 0, optCostBasis = 0, lockedCash = 0;
     let peakPrice = series[0].price;
     let lastBuyIdx = -99, lastSellIdx = -99;
+    let dipStage = 0;
+    let dipPoolBase = 0;
+    const stageWeights = [0.30, 0.50, 0.20];
     let tpCount = 0, dipBuyCount = 0;
 
     const curveOpt = [], curveBH = [], tpEvents = [], buyEvents = [];
 
     for (let m = 0; m < months; m++) {
       const p = series[m].price;
-      if (p > peakPrice) peakPrice = p;
+      if (p > peakPrice) {
+        peakPrice = p;
+        dipStage = 0;
+        dipPoolBase = 0;
+      }
 
       bhShares += monthly / p;
       curveBH.push(bhShares * p);
@@ -1780,20 +1787,36 @@
       }
 
       const drawdown = (peakPrice - p) / peakPrice;
-      if (dipBuyPct > 0 && lockedCash >= 5000 && drawdown >= dipBuyPct && (m - lastBuyIdx >= 2)) {
-        const deployAmt = lockedCash <= monthly * 2.5 ? lockedCash : lockedCash * 0.5;
-        optShares += deployAmt / p;
-        optCostBasis += deployAmt;
-        lockedCash -= deployAmt;
-        dipBuyCount++;
-        lastBuyIdx = m;
-        buyEvents.push({
-          idx: m,
-          date: series[m].date,
-          price: p,
-          buyVal: deployAmt,
-          totalAsset: lockedCash + optShares * p
-        });
+      const targetDrawdown = dipStepPct * (dipStage + 1);
+      const timeGapOk = (dipStage === 0) ? true : (m - lastBuyIdx >= 2);
+
+      if (dipStepPct > 0 && dipStage < 3 && lockedCash >= 1000 && drawdown >= targetDrawdown && timeGapOk) {
+        if (dipStage === 0) {
+          dipPoolBase = lockedCash;
+        }
+        const weight = stageWeights[dipStage];
+        const deployAmt = (dipStage === 2)
+          ? lockedCash
+          : Math.min(lockedCash, Math.round(dipPoolBase * weight));
+
+        if (deployAmt > 0) {
+          optShares += deployAmt / p;
+          optCostBasis += deployAmt;
+          lockedCash -= deployAmt;
+          dipStage++;
+          dipBuyCount++;
+          lastBuyIdx = m;
+          buyEvents.push({
+            idx: m,
+            date: series[m].date,
+            price: p,
+            stage: dipStage,
+            pctLabel: Math.round(weight * 100),
+            ddLabel: (drawdown * 100).toFixed(1),
+            buyVal: deployAmt,
+            totalAsset: lockedCash + optShares * p
+          });
+        }
       }
 
       const curMarketVal = optShares * p;
@@ -1805,6 +1828,8 @@
         lockedCash += soldVal;
         optShares = optShares * (1 - sellRatio);
         optCostBasis = optCostBasis * (1 - sellRatio);
+        dipStage = 0;
+        dipPoolBase = 0;
         tpCount++;
         lastSellIdx = m;
         tpEvents.push({
@@ -1826,31 +1851,31 @@
 
     document.getElementById('dcaPrincipal').textContent = fmtMoney(principal);
     const periodSub = document.getElementById('dcaPeriodSub');
-    if (periodSub) periodSub.textContent = `共扣款 ${months} 個月 (${series[0].date} ~ ${series[months - 1].date})`;
+    if (periodSub) periodSub.textContent = '共扣款 ' + months + ' 個月 (' + series[0].date + ' ~ ' + series[months - 1].date + ')';
 
     document.getElementById('tpFinalVal').textContent = fmtMoney(finalOpt);
-    document.getElementById('tpTriggerInfo').textContent = `停利 ${tpCount} 次 / 低接 ${dipBuyCount} 次（總報酬 ${(((finalOpt - principal)/principal)*100).toFixed(1)}%）`;
+    document.getElementById('tpTriggerInfo').textContent = '停利 ' + tpCount + ' 次 / 低接 ' + dipBuyCount + ' 次（總報酬 ' + (((finalOpt - principal)/principal)*100).toFixed(1) + '%）';
     document.getElementById('bhFinalVal').textContent = fmtMoney(finalBH);
-    document.getElementById('bhReturnInfo').textContent = `總報酬率 ${(((finalBH - principal)/principal)*100).toFixed(1)}%`;
+    document.getElementById('bhReturnInfo').textContent = '總報酬率 ' + (((finalBH - principal)/principal)*100).toFixed(1) + '%';
     document.getElementById('dcaDiff').className = 'kpi-val ' + (diff >= 0 ? 'pos' : 'neg');
     document.getElementById('dcaDiff').textContent = (diff >= 0 ? '+' : '') + fmtMoney(diff);
-    document.getElementById('tpLockedCash').textContent = `帳上保留現金：${fmtMoney(lockedCash)}`;
+    document.getElementById('tpLockedCash').textContent = '帳上保留現金：' + fmtMoney(lockedCash);
 
     if (infoBox) {
       const pStart = series[0].price;
       const pEnd = series[months - 1].price;
       const pChg = ((pEnd - pStart) / pStart) * 100;
       const sellText = tpEvents.length > 0
-        ? tpEvents.map(e => `${e.date} ($${fmtDec(e.price, 2)} 減碼落袋 ${fmtMoney(e.soldVal)})`).join('、')
+        ? tpEvents.map(e => e.date + ' ($' + fmtDec(e.price, 2) + ' 減碼落袋 ' + fmtMoney(e.soldVal) + ')').join('、')
         : '期間未觸發停利減碼';
       const buyText = buyEvents.length > 0
-        ? buyEvents.map(e => `${e.date} ($${fmtDec(e.price, 2)} 倒回加碼 ${fmtMoney(e.buyVal)})`).join('、')
+        ? buyEvents.map(e => e.date + ' [第' + e.stage + '批 ' + e.pctLabel + '%] ($' + fmtDec(e.price, 2) + '，自高點-' + e.ddLabel + '%，加碼 ' + fmtMoney(e.buyVal) + ')').join('、')
         : '期間未觸發回檔低接';
 
       infoBox.style.background = isReal ? '#ecfdf5' : '#f8fafc';
       infoBox.style.borderColor = isReal ? '#a7f3d0' : '#e2e8f0';
       infoBox.style.color = isReal ? '#065f46' : '#334155';
-      infoBox.innerHTML = `<strong>${isReal ? '✅ 真實歷史走勢：' : '🧪 模擬劇本：'}${labelTitle}</strong>（${series[0].date} ~ ${series[months - 1].date}）｜ 股價變化：<strong>$${fmtDec(pStart, 2)} → $${fmtDec(pEnd, 2)} (${pChg >= 0 ? '+' : ''}${pChg.toFixed(1)}%)</strong><br>🟠 <strong>停利減碼紀錄：</strong>${sellText}<br>🟢 <strong>回檔低接紀錄：</strong>${buyText}`;
+      infoBox.innerHTML = '<strong>' + (isReal ? '✅ 真實歷史走勢：' : '🧪 模擬劇本：') + labelTitle + '</strong>（' + series[0].date + ' ~ ' + series[months - 1].date + '）｜ 股價變化：<strong>$' + fmtDec(pStart, 2) + ' → $' + fmtDec(pEnd, 2) + ' (' + (pChg >= 0 ? '+' : '') + pChg.toFixed(1) + '%)</strong><br>🟠 <strong>停利減碼紀錄：</strong>' + sellText + '<br>🟢 <strong>3:5:2 回檔低接紀錄：</strong>' + buyText;
     }
 
     drawDCASvg(curveOpt, curveBH, series, tpEvents, buyEvents, principal, labelTitle);
@@ -1875,7 +1900,7 @@
 
     const pathOpt = curveOpt.map((v, i) => `${i === 0 ? 'M' : 'L'}${mapX(i).toFixed(1)},${mapY(v).toFixed(1)}`).join(' ');
     const pathBH = curveBH.map((v, i) => `${i === 0 ? 'M' : 'L'}${mapX(i).toFixed(1)},${mapY(v).toFixed(1)}`).join(' ');
-    const pathPrice = series.map((s, i) => `${i === 0 ? 'M' : 'L'}${mapX(i).toFixed(1)}`,${mapPriceY(s.price).toFixed(1)}`).join(' ');
+    const pathPrice = series.map((s, i) => `${i === 0 ? 'M' : 'L'}${mapX(i).toFixed(1)},${mapPriceY(s.price).toFixed(1)}`).join(' ');
     const areaPrice = `${pathPrice} L${mapX(n - 1).toFixed(1)},${(padT + plotH).toFixed(1)} L${padL},${(padT + plotH).toFixed(1)} Z`;
 
     let grid = '';
