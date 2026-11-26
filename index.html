@@ -1,0 +1,2055 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>投資決策精算儀表板（手機版）</title>
+<style>
+  :root {
+    --bg: #f1f5f9;
+    --surface: #ffffff;
+    --surface-alt: #f8fafc;
+    --navy: #0f172a;
+    --navy-light: #1e293b;
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --emerald: #059669;
+    --emerald-bg: #ecfdf5;
+    --amber: #d97706;
+    --amber-bg: #fffbeb;
+    --rose: #e11d48;
+    --rose-bg: #fff1f2;
+    --text: #0f172a;
+    --text-muted: #64748b;
+    --border: #e2e8f0;
+    --radius: 14px;
+    --shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
+    --nav-h: 66px;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Microsoft JhengHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 18px);
+  }
+  header {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+    color: #fff;
+    padding: calc(14px + env(safe-area-inset-top)) 16px 14px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+  }
+  .header-row {
+    max-width: 960px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+  h1 { margin: 0; font-size: 17px; font-weight: 700; letter-spacing: 0.01em; }
+  .header-badge {
+    font-size: 11px;
+    background: rgba(56, 189, 248, 0.18);
+    color: #7dd3fc;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .safari-tip {
+    display: none;
+    background: #fef3c7;
+    color: #92400e;
+    font-size: 12.5px;
+    padding: 10px 14px;
+    border-bottom: 1px solid #fde68a;
+    line-height: 1.45;
+  }
+  main {
+    max-width: 960px;
+    margin: 14px auto 0;
+    padding: 0 12px;
+  }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 16px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    margin-bottom: 14px;
+  }
+  .card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+  .card h2 { margin: 0; font-size: 16px; color: var(--navy); }
+  .card-desc { margin: 0 0 12px; font-size: 12.5px; color: var(--text-muted); }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  @media (max-width: 680px) {
+    .grid-2 { grid-template-columns: 1fr; }
+    .grid-3 { grid-template-columns: 1fr 1fr; }
+  }
+
+  .kpi-box {
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+  }
+  .kpi-label { font-size: 11.5px; color: var(--text-muted); font-weight: 600; }
+  .kpi-val { font-size: 19px; font-weight: 800; margin: 4px 0 2px; color: var(--navy); }
+  .kpi-sub { font-size: 11.5px; color: var(--text-muted); }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 700;
+  }
+  .badge-green { background: var(--emerald-bg); color: var(--emerald); }
+  .badge-amber { background: var(--amber-bg); color: var(--amber); }
+  .badge-red { background: var(--rose-bg); color: var(--rose); }
+
+  .btn-scroll {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    margin-bottom: 12px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .btn {
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 9px 13px;
+    min-height: 40px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .btn-sm { padding: 6px 10px; min-height: 34px; font-size: 12px; border-radius: 8px; }
+
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+  /* 16px 字級避免 iOS Safari 點擊輸入框時自動放大畫面 */
+  input[type="number"], input[type="text"], select {
+    width: 100%;
+    padding: 9px 10px;
+    min-height: 42px;
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+    background: #fff;
+  }
+  input[type="range"] {
+    width: 100%;
+    height: 28px;
+    accent-color: var(--primary);
+  }
+  .pos { color: var(--emerald); font-weight: 700; }
+  .neg { color: var(--rose); font-weight: 700; }
+
+  /* 資金風向檢核卡片 */
+  .weather-item {
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+  .weather-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+  .weather-title { font-weight: 700; font-size: 13.5px; color: var(--navy); }
+  .date-tag {
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: 6px;
+    background: #dbeafe;
+    color: #1e40af;
+    font-weight: 700;
+  }
+  .metric-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    background: #fff;
+    border: 1px solid #dbeafe;
+    border-radius: 9px;
+    padding: 8px;
+    margin-bottom: 8px;
+  }
+  .metric-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .m-cell label { font-size: 11px; margin-bottom: 2px; }
+  .m-cell input { padding: 6px 8px; min-height: 36px; background: #f8fafc; }
+  .m-readonly {
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 800;
+    border-radius: 8px;
+    background: #f1f5f9;
+  }
+
+  .bar-wrap {
+    height: 20px;
+    border-radius: 999px;
+    overflow: hidden;
+    display: flex;
+    background: #e2e8f0;
+    margin: 12px 0;
+  }
+  .bar-growth { background: #3b82f6; transition: width 0.25s; }
+  .bar-div { background: #10b981; transition: width 0.25s; }
+
+  /* 手機版清單卡片（取代寬表格） */
+  .mobile-list-card {
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 10px;
+  }
+  .ml-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .ml-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12.5px;
+    padding: 4px 0;
+    border-top: 1px dashed #e2e8f0;
+  }
+  .svg-box { width: 100%; overflow: hidden; }
+  .svg-box svg { width: 100%; height: auto; display: block; }
+
+  .check-group {
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 10px;
+  }
+  .check-group h3 { margin: 0 0 8px; font-size: 14px; color: var(--primary); }
+  .check-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13.5px;
+    padding: 6px 0;
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--text);
+  }
+  .check-item input {
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+    flex-shrink: 0;
+    accent-color: var(--primary);
+  }
+
+  /* 底部原生 App 導覽列 */
+  nav.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: calc(var(--nav-h) + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-top: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    z-index: 100;
+    box-shadow: 0 -2px 12px rgba(15, 23, 42, 0.06);
+  }
+  .nav-btn {
+    border: none;
+    background: transparent;
+    color: #64748b;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 4px 2px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .nav-btn .ico { font-size: 18px; line-height: 1.1; }
+  .nav-btn .lbl { font-size: 11px; font-weight: 700; }
+  .nav-btn.active { color: var(--primary); }
+  .nav-btn.active .ico { transform: scale(1.1); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-row">
+    <h1>📊 投資決策精算儀表板</h1>
+    <span class="header-badge" id="headerSectionTag">1. 資金風向</span>
+  </div>
+</header>
+
+<div id="safariTipBanner" class="safari-tip">
+  💡 <strong>iPhone 提示</strong>：若目前是在「檔案 App」預覽模式，請點擊右上角或右下角「分享」圖示，選擇<strong>「用 Safari 開啟」</strong>以獲得完整觸控與即時抓價體驗。
+</div>
+
+<main>
+  <!-- 1. 資金面與風向 -->
+  <section id="tab_weather" class="panel active">
+    <div class="card">
+      <div class="card-head">
+        <h2>市場溫度計與配置建議</h2>
+        <button class="btn btn-primary btn-sm" id="btnFetchLive" onclick="fetchLiveMarketData()">🔄 更新報價</button>
+      </div>
+      <div id="fetchStatusText" style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">正在同步最新匯率與大盤數據...</div>
+
+      <div class="svg-box" style="text-align:center;">
+        <svg id="weatherGaugeSvg" viewBox="0 0 420 215" style="max-width:360px; margin:0 auto;"></svg>
+      </div>
+
+      <div class="grid-3" style="margin-top:8px; margin-bottom:12px;">
+        <div class="kpi-box">
+          <div class="kpi-label">資金面（錢堆）</div>
+          <div class="kpi-val" id="wLiqScore">4 / 6 分</div>
+          <div id="wLiqBadge"></div>
+        </div>
+        <div class="kpi-box">
+          <div class="kpi-label">風向面（趨勢）</div>
+          <div class="kpi-val" id="wWindScore">3 / 4 分</div>
+          <div id="wWindBadge"></div>
+        </div>
+        <div class="kpi-box" style="grid-column: span 2;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div class="kpi-label">建議現金保留水位</div>
+              <div class="kpi-val" id="wCashRec" style="color:var(--primary)">20%</div>
+            </div>
+            <div style="text-align:right; font-size:12.5px;">
+              <div>🚀 成長：<strong id="recGrowthPct" style="color:#2563eb">45%</strong></div>
+              <div>🛡️ 存股：<strong id="recDivPct" style="color:#059669">35%</strong></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="wStrategyBox" style="padding:12px; border-radius:10px; background:var(--emerald-bg); border-left:4px solid var(--emerald); margin-bottom:12px;">
+        <div id="wStrategyTitle" style="font-weight:800; font-size:14px; color:var(--emerald); margin-bottom:4px;">🟢 穩健偏多環境（7/10 分）</div>
+        <p id="wStrategyDesc" style="margin:0; font-size:13px;">資金面與趨勢面整體正向，建議保留 20% 彈性現金，其餘採雙軌並行。</p>
+      </div>
+
+      <button class="btn btn-primary" style="width:100%;" onclick="applyWeatherToAlloc()">將建議比例套用至「資產配置」→</button>
+    </div>
+
+    <div class="card">
+      <h2>五維度數值檢核（可直接點擊修改）</h2>
+      <p class="card-desc">「上漲靠錢堆，下跌靠風吹」——檢核匯率、活水、量能、點數與融資溫度。</p>
+
+      <div class="weather-item">
+        <div class="weather-head">
+          <span class="weather-title">① 美元兌新台幣匯率 (TWD=X)</span>
+          <span class="date-tag" id="dateFx">基準日: 載入中</span>
+        </div>
+        <div class="metric-grid">
+          <div class="m-cell"><label>目前匯率 (元)</label><input type="number" id="valFxNow" value="32.45" step="0.005" oninput="recalcFromMetrics()"></div>
+          <div class="m-cell"><label>季線乖離率</label><div class="m-readonly" id="dispFxBias">+0.93%</div></div>
+          <div class="m-cell"><label>20日均線</label><input type="number" id="valFx20" value="32.38" step="0.005" oninput="recalcFromMetrics()"></div>
+          <div class="m-cell"><label>60日均線</label><input type="number" id="valFx60" value="32.15" step="0.005" oninput="recalcFromMetrics()"></div>
+        </div>
+        <select id="wFx" onchange="updateWeather()">
+          <option value="2">🟢 滿足（2分）：台幣升值，跌破月季線</option>
+          <option value="1" selected>🟡 中性（1分）：匯率於月季線間整理</option>
+          <option value="0">🔴 不滿足（0分）：台幣偏弱貶值站上月季線</option>
+        </select>
+      </div>
+
+      <div class="weather-item">
+        <div class="weather-head">
+          <span class="weather-title">② 央行 M1B / M2 年增率</span>
+          <span class="date-tag">每月25日公布</span>
+        </div>
+        <div class="metric-grid cols-3">
+          <div class="m-cell"><label>M1B (%)</label><input type="number" id="valM1b" value="4.85" step="0.05" oninput="recalcFromMetrics()"></div>
+          <div class="m-cell"><label>M2 (%)</label><input type="number" id="valM2" value="5.40" step="0.05" oninput="recalcFromMetrics()"></div>
+          <div class="m-cell"><label>M1B-M2</label><div class="m-readonly" id="dispM1bDiff">-0.55%</div></div>
+        </div>
+        <select id="wM1b" onchange="updateWeather()">
+          <option value="2">🟢 滿足（2分）：雙雙正成長且 M1B ≥ M2</option>
+          <option value="1" selected>🟡 中性（1分）：正成長但動能持平</option>
+          <option value="0">🔴 不滿足（0分）：M1B 下滑或轉負</option>
+        </select>
+      </div>
+
+      <div class="weather-item">
+        <div class="weather-head">
+          <span class="weather-title">③ 加權指數成交金額 (億元)</span>
+          <span class="date-tag" id="dateVol">基準日: 載入中</span>
+        </div>
+        <div class="metric-grid cols-3">
+          <div class="m-cell"><label>最新成交(億)</label><input type="number" id="valVolNow" value="3850" step="10" oninput="recalcFromMetrics()"></div>
+          <div class="m-cell"><label>20日均量(億)</label><input type="number" id="valVol20" value="3520" step="10" oninput="recalcFromMetrics()"></div>
+          <div class="m-cell"><label>量能倍數</label><div class="m-readonly" id="dispVolRatio">1.09x</div></div>
+        </div>
+        <select id="wVol" onchange="updateWeather()">
+          <option value="2" selected>🟢 滿足（2分）：攻勢量增、拉回量縮</option>
+          <option value="1">🟡 中性（1分）：量能溫和觀望 (0.75x~1.0x)</option>
+          <option value="0">🔴 不滿足（0分）：帶量長黑或量能萎縮</option>
+        </select>
+      </div>
+
+      <div class="weather-item">
+        <div class="weather-head">
+          <span class="weather-title">④ 台灣加權指數 (^TWII) 點數與均線</span>
+          <span class="date-tag" id="dateIdx">基準日: 載入中</span>
+        </div>
+        <div class="metric-grid">
+          <div class="m-cell"><label>目前點數</label><input type="number" id="valIdxNow" value="22850" step="10" oninput="recalcFromMetrics()"></div>
+          <div class="m-cell"><label>季線乖離率</label><div class="m-readonly" id="dispIdxBias">+3.02%</div></div>
+          <div class="m-cell"><label>20日均線</label><input type="number" id="valIdx20" value="22620" step="10" oninput="recalcFromMetrics()"></div>
+          <div class="m-cell"><label>60日均線</label><input type="number" id="valIdx60" value="22180" step="10" oninput="recalcFromMetrics()"></div>
+        </div>
+        <select id="wTrend" onchange="updateWeather()">
+          <option value="2" selected>🟢 滿足（2分）：站穩 MA20 與 MA60 多頭排列</option>
+          <option value="1">🟡 中性（1分）：介於月季線之間糾結</option>
+          <option value="0">🔴 不滿足（0分）：跌破月季線空頭反壓</option>
+        </select>
+      </div>
+
+      <div class="weather-item" style="margin-bottom:0;">
+        <div class="weather-head">
+          <span class="weather-title">⑤ 大盤融資餘額與籌碼溫度</span>
+          <span class="date-tag" id="dateMargin">基準日: 載入中</span>
+        </div>
+        <div class="metric-grid cols-3">
+          <div class="m-cell"><label>融資餘額(億)</label><input type="number" id="valMarginNow" value="3180.0" step="5" oninput="recalcFromMetrics()"></div>
+          <div class="m-cell"><label>近5日增減</label><input type="number" id="valMarginChg" value="25.0" step="5" oninput="recalcFromMetrics()"></div>
+          <div class="m-cell"><label>籌碼狀態</label><div class="m-readonly" id="dispMarginState">溫和健康</div></div>
+        </div>
+        <select id="wSent" onchange="updateWeather()">
+          <option value="2">🟢 滿足（2分）：遇利空有撐，融資溫和未過熱</option>
+          <option value="1" selected>🟡 中性（1分）：消息面多空交雜輪動</option>
+          <option value="0">🔴 不滿足（0分）：利多不漲或融資暴增過熱</option>
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. 雙軌資產配置 -->
+  <section id="tab_alloc" class="panel">
+    <div class="card">
+      <h2>自訂三軌投資比例配置器</h2>
+      <p class="card-desc">左右滑動上方快捷按鈕或直接輸入自訂百分比。</p>
+
+      <div class="btn-scroll">
+        <button class="btn btn-sm" onclick="setStage(20, 30, 50, 7.5)">2:3:5 經典 (20/30/50)</button>
+        <button class="btn btn-sm" onclick="setStage(0, 80, 20, 6.5)">年輕衝刺 (0/80/20)</button>
+        <button class="btn btn-sm" onclick="setStage(0, 50, 50, 7.5)">穩健平衡 (0/50/50)</button>
+        <button class="btn btn-sm" onclick="setStage(0, 20, 80, 8.0)">退休樂活 (0/20/80)</button>
+      </div>
+
+      <div id="weatherSyncBanner" style="display:none; background:#eff6ff; color:#1d4ed8; padding:8px 10px; border-radius:8px; font-size:12px; font-weight:600; margin-bottom:10px;"></div>
+
+      <div class="grid-2" style="margin-bottom:12px;">
+        <div>
+          <label>總可投資資金（新台幣元）</label>
+          <input type="number" id="totalCap" value="10000000" step="50000" oninput="updateTabAlloc()">
+        </div>
+        <div>
+          <label>存股部位預估殖利率（%）</label>
+          <input type="number" id="stageYield" value="8.0" step="0.1" oninput="updateTabAlloc()">
+        </div>
+      </div>
+
+      <div style="background:var(--surface-alt); border:1px solid #dbeafe; border-radius:10px; padding:10px; margin-bottom:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span id="allocSumBadge" class="badge badge-green">✅ 總計：100%</span>
+          <button class="btn btn-sm" id="btnAutoBalance" style="display:none;" onclick="autoBalanceAlloc()">自動補足 100%</button>
+        </div>
+        <div class="grid-3" style="grid-template-columns: repeat(3, 1fr); gap:8px;">
+          <div>
+            <label style="color:#475569;">💵 現金(%)</label>
+            <input type="number" id="pctCash" value="0" min="0" max="100" oninput="onCustomPctInput('cash')">
+          </div>
+          <div>
+            <label style="color:#2563eb;">🚀 成長(%)</label>
+            <input type="number" id="pctGrowth" value="20" min="0" max="100" oninput="onCustomPctInput('growth')">
+          </div>
+          <div>
+            <label style="color:#059669;">🛡️ 存股(%)</label>
+            <input type="number" id="pctDiv" value="80" min="0" max="100" oninput="onCustomPctInput('div')">
+          </div>
+        </div>
+        <div style="margin-top:8px;">
+          <input type="range" id="growthSlider" min="0" max="100" value="20" oninput="onSliderMove()">
+        </div>
+      </div>
+
+      <div class="bar-wrap">
+        <div id="barCash" style="background:#94a3b8; width:0%;"></div>
+        <div id="barGrowth" class="bar-growth" style="width:20%"></div>
+        <div id="barDiv" class="bar-div" style="width:80%"></div>
+      </div>
+
+      <div class="grid-2" style="gap:10px;">
+        <div class="kpi-box">
+          <div class="kpi-label">💵 現金防禦保留</div>
+          <div class="kpi-val" id="cashAmt" style="color:#475569;">$0</div>
+        </div>
+        <div class="kpi-box">
+          <div class="kpi-label">🚀 強勢成長部位</div>
+          <div class="kpi-val" id="growthAmt" style="color:#2563eb;">$2,000,000</div>
+        </div>
+        <div class="kpi-box">
+          <div class="kpi-label">🛡️ 穩健存股部位</div>
+          <div class="kpi-val" id="divAmt" style="color:#059669;">$8,000,000</div>
+        </div>
+        <div class="kpi-box">
+          <div class="kpi-label">💰 預估年領股息</div>
+          <div class="kpi-val" id="estAnnualDiv">$640,000</div>
+          <div class="kpi-sub" id="estMonthlyDiv">月均約 $53,333</div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" style="width:100%; margin-top:12px;" onclick="syncToIRR()">將此殖利率帶入「IRR 精算」→</button>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>自訂標的細項比例清單</h2>
+        <button class="btn btn-sm" onclick="addCustomRow()">＋ 新增標的</button>
+      </div>
+      <p class="card-desc">逐檔設定持股比例與殖利率，自動換算應投入金額。</p>
+      <div id="customAllocList"></div>
+      <div class="kpi-box" style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+        <div>
+          <div class="kpi-label">細項比例合計：<strong id="customRowsPctSum">100.0%</strong></div>
+          <div style="font-size:13px; font-weight:700;">年領股息：<span id="customRowsDivSum" class="pos">$0</span></div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="syncRowsToTop()">同步至上方比例 ↑</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. 高股息安全氣囊 & IRR 精算 -->
+  <section id="tab_irr" class="panel">
+    <div class="card">
+      <h2>高股息安全氣囊 & IRR 精算</h2>
+      <p class="card-desc">驗證跨過回本年數後，即使期末股價歸零，年化報酬率依然為正。</p>
+
+      <div class="btn-scroll">
+        <button class="btn btn-sm" onclick="setIRRPreset(100, 8.0, 13)">影片基準 (100/配8/13年)</button>
+        <button class="btn btn-sm" onclick="setIRRPreset(22.5, 1.8, 10)">常見高股息 (22.5/配1.8/10年)</button>
+        <button class="btn btn-sm" onclick="setIRRPreset(22.5, 1.8, 30)">超長期存股 (22.5/配1.8/30年)</button>
+      </div>
+
+      <div class="grid-2" style="margin-bottom:10px;">
+        <div>
+          <label>買入價格（元）</label>
+          <input type="number" id="buyPrice" value="100" step="0.1" min="0.1" oninput="updateTabIRR()">
+        </div>
+        <div>
+          <label>預估年均配息（元/股）</label>
+          <input type="number" id="annDiv" value="8" step="0.05" min="0" oninput="updateTabIRR()">
+        </div>
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <label>預計持有年數：<strong id="holdYearsVal" style="color:var(--primary); font-size:15px;">13</strong> 年</label>
+        <input type="range" id="holdYears" min="1" max="50" value="13" oninput="updateTabIRR()">
+      </div>
+
+      <div class="grid-2" style="gap:10px;">
+        <div class="kpi-box">
+          <div class="kpi-label">初始殖利率</div>
+          <div class="kpi-val" id="kpiYield">8.00%</div>
+        </div>
+        <div class="kpi-box">
+          <div class="kpi-label">配息回本年數</div>
+          <div class="kpi-val" id="kpiPayback">12.50 年</div>
+          <div id="kpiPaybackBadge"></div>
+        </div>
+        <div class="kpi-box">
+          <div class="kpi-label">累積總配息</div>
+          <div class="kpi-val" id="kpiTotalDiv">$104.00</div>
+          <div class="kpi-sub" id="kpiDivRatio">已回收 104.0%</div>
+        </div>
+        <div class="kpi-box">
+          <div class="kpi-label">第 <span id="beYearSpan">13</span> 年保本股價</div>
+          <div class="kpi-val" id="kpiBreakeven">$0.00</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>1～50 年安全氣囊收斂折線圖</h2>
+      <div class="svg-box">
+        <svg id="irrSvg" viewBox="0 0 520 290"></svg>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>不同期末股價情境壓力測試</h2>
+      <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:10px; margin-bottom:12px;">
+        <label style="color:#1e40af;">🎯 自訂期末股價試算（元）：</label>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <input type="number" id="customEndPrice" value="75" step="0.5" min="0" style="width:120px;" oninput="updateTabIRR()">
+          <div style="font-size:13px;">
+            總回收 <strong id="custTotal">-</strong> ｜ IRR <strong id="custIRR">-</strong>
+          </div>
+        </div>
+      </div>
+      <div id="irrScenarioCards"></div>
+    </div>
+  </section>
+
+  <!-- 4. 停利不停扣模擬器 -->
+  <section id="tab_dca" class="panel">
+    <div class="card">
+      <h2>ETF「停利不停扣」循環模擬</h2>
+      <p class="card-desc">達標獲利了結落袋為安，隨即重啟定期定額扣款。</p>
+
+      <div class="grid-2" style="margin-bottom:10px;">
+        <div>
+          <label>每月扣款金額（元）</label>
+          <input type="number" id="dcaAmt" value="10000" step="1000" min="1000" oninput="updateTabDCA()">
+        </div>
+        <div>
+          <label>模擬總月數（60月=5年）</label>
+          <input type="number" id="dcaMonths" value="60" step="12" min="12" max="180" oninput="updateTabDCA()">
+        </div>
+        <div>
+          <label>停利目標報酬率（%）</label>
+          <input type="number" id="tpTarget" value="15" step="1" min="5" max="100" oninput="updateTabDCA()">
+        </div>
+        <div>
+          <label>市場行情劇本</label>
+          <select id="marketScenario" onchange="updateTabDCA()">
+            <option value="shock">回檔 30% 後復甦</option>
+            <option value="bull">穩健多頭震盪走高</option>
+            <option value="range">大區間箱型來回震盪</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid-2" style="gap:10px; margin-bottom:12px;">
+        <div class="kpi-box">
+          <div class="kpi-label">累積投入本金</div>
+          <div class="kpi-val" id="dcaPrincipal">$600,000</div>
+        </div>
+        <div class="kpi-box">
+          <div class="kpi-label">停利不停扣總資產</div>
+          <div class="kpi-val" id="tpFinalVal" style="color:var(--primary)">-</div>
+          <div class="kpi-sub" id="tpTriggerInfo">停利 0 次</div>
+        </div>
+        <div class="kpi-box">
+          <div class="kpi-label">單純抱上抱下資產</div>
+          <div class="kpi-val" id="bhFinalVal">-</div>
+          <div class="kpi-sub" id="bhReturnInfo">-</div>
+        </div>
+        <div class="kpi-box">
+          <div class="kpi-label">策略超額差異</div>
+          <div class="kpi-val" id="dcaDiff">-</div>
+          <div class="kpi-sub" id="tpLockedCash">落袋現金：-</div>
+        </div>
+      </div>
+
+      <div class="svg-box">
+        <svg id="dcaSvg" viewBox="0 0 640 260"></svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. 自選股雙策略掃描 -->
+  <section id="tab_scanner" class="panel">
+    <div class="card">
+      <div class="card-head">
+        <h2>自選股技術面雙策略掃描</h2>
+        <button class="btn btn-primary btn-sm" id="btnRunScan" onclick="runWatchlistScan()">🔄 立即掃描</button>
+      </div>
+      <div id="scanStatusText" style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">均線 5/10/20/60 × KD(9,3,3) × 20日量比</div>
+
+      <div style="display:flex; gap:8px; margin-bottom:10px;">
+        <input type="text" id="newScanTicker" placeholder="輸入代號如 2330, 6147, 00919" onkeydown="if(event.key==='Enter') addScanTickers()">
+        <button class="btn btn-primary" onclick="addScanTickers()">加入</button>
+      </div>
+
+      <div class="grid-3" style="grid-template-columns: repeat(3, 1fr); gap:8px; margin-bottom:12px;">
+        <div class="kpi-box" style="padding:10px; text-align:center;">
+          <div class="kpi-label">🚀 波段買點</div>
+          <div class="kpi-val" id="scanMomBuyCount" style="font-size:18px; color:var(--emerald);">0 檔</div>
+        </div>
+        <div class="kpi-box" style="padding:10px; text-align:center;">
+          <div class="kpi-label">🛡️ 存股低接</div>
+          <div class="kpi-val" id="scanDipBuyCount" style="font-size:18px; color:var(--primary);">0 檔</div>
+        </div>
+        <div class="kpi-box" style="padding:10px; text-align:center;">
+          <div class="kpi-label">⚠️ 停利警戒</div>
+          <div class="kpi-val" id="scanWarnCount" style="font-size:18px; color:var(--rose);">0 檔</div>
+        </div>
+      </div>
+
+      <div id="scannerCardsContainer">
+        <div style="text-align:center; color:#64748b; padding:20px; font-size:13px;">切換至此分頁將自動開始掃描行情...</div>
+      </div>
+
+      <div style="text-align:right; margin-top:8px;">
+        <button class="btn btn-sm" onclick="resetDefaultScanList()">還原預設自選股清單</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. 買賣決策三步驟檢核 -->
+  <section id="tab_check" class="panel">
+    <div class="card">
+      <h2>進場前決策「三步驟」檢核</h2>
+      <p class="card-desc">依序檢核基本面、技術面與資金策略，避免衝動下單。</p>
+
+      <div style="margin-bottom:10px;">
+        <label>評估標的代號與名稱</label>
+        <input type="text" id="chkTicker" placeholder="例如：00919 或 2330 台積電">
+      </div>
+      <div style="margin-bottom:12px;">
+        <label>操作定位（願景目標）</label>
+        <select id="chkRole">
+          <option value="存股領息（時間財）">存股領息（賺時間財，著重現金流）</option>
+          <option value="強勢波段（機會財）">強勢波段（賺機會財，著重趨勢與停損）</option>
+        </select>
+      </div>
+
+      <div class="check-group">
+        <h3>步驟一：選股（基本面與賽道）</h3>
+        <label class="check-item"><input type="checkbox" class="step-chk" data-step="1" onchange="updateTabCheck()"> 產業處於長線成長或規格升級賽道</label>
+        <label class="check-item"><input type="checkbox" class="step-chk" data-step="1" onchange="updateTabCheck()"> 營收穩健，或 ETF 具自動汰弱留強機制</label>
+        <label class="check-item"><input type="checkbox" class="step-chk" data-step="1" onchange="updateTabCheck()"> 非盲從報明牌，已確認核心業務</label>
+      </div>
+
+      <div class="check-group">
+        <h3>步驟二：擇時（技術面買賣點）</h3>
+        <label class="check-item"><input type="checkbox" class="step-chk" data-step="2" onchange="updateTabCheck()"> 均線位階符合策略（多頭排列或回測支撐）</label>
+        <label class="check-item"><input type="checkbox" class="step-chk" data-step="2" onchange="updateTabCheck()"> KD、MACD 指標出現轉強或低檔金叉</label>
+        <label class="check-item"><input type="checkbox" class="step-chk" data-step="2" onchange="updateTabCheck()"> 價量配合健康（突破量增、拉回量縮）</label>
+      </div>
+
+      <div class="check-group">
+        <h3>步驟三：策略（資金與風險控管）</h3>
+        <label class="check-item"><input type="checkbox" class="step-chk" data-step="3" onchange="updateTabCheck()"> 已規劃分批進場節奏（不單筆全押）</label>
+        <label class="check-item"><input type="checkbox" class="step-chk" data-step="3" onchange="updateTabCheck()"> 已設定明確停損價位或波段停利目標</label>
+        <label class="check-item"><input type="checkbox" class="step-chk" data-step="3" onchange="updateTabCheck()"> 投入金額符合當前資金面風向比例</label>
+      </div>
+
+      <div id="verdictBox" style="margin-top:12px; padding:14px; border-radius:10px; background:var(--rose-bg); color:var(--rose); font-weight:700; font-size:13.5px;">
+        <div id="verdictText" style="margin-bottom:10px;">🔴 暫緩進場（通過 0/9 項）：條件尚未齊全。</div>
+        <button class="btn btn-primary" style="width:100%;" onclick="saveDecisionLog()">儲存至本機決策紀錄</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>決策筆記紀錄</h2>
+        <button class="btn btn-sm" onclick="clearLogs()">清空</button>
+      </div>
+      <div id="decisionLogsContainer"></div>
+    </div>
+  </section>
+</main>
+
+<nav class="bottom-nav">
+  <button class="nav-btn active" onclick="switchTab('tab_weather', this, '1. 資金風向')">
+    <span class="ico">🌡️</span><span class="lbl">風向</span>
+  </button>
+  <button class="nav-btn" onclick="switchTab('tab_alloc', this, '2. 資產配置')">
+    <span class="ico">⚖️</span><span class="lbl">配置</span>
+  </button>
+  <button class="nav-btn" onclick="switchTab('tab_irr', this, '3. IRR 精算')">
+    <span class="ico">🛡️</span><span class="lbl">IRR</span>
+  </button>
+  <button class="nav-btn" onclick="switchTab('tab_dca', this, '4. 停利循環')">
+    <span class="ico">🔄</span><span class="lbl">停利</span>
+  </button>
+  <button class="nav-btn" onclick="switchTab('tab_scanner', this, '5. 自選掃描')">
+    <span class="ico">🔍</span><span class="lbl">掃描</span>
+  </button>
+  <button class="nav-btn" onclick="switchTab('tab_check', this, '6. 買賣檢核')">
+    <span class="ico">✅</span><span class="lbl">檢核</span>
+  </button>
+</nav>
+
+<script>
+  const memStore = {};
+  const safeStorage = {
+    getItem(k) {
+      try { return window.localStorage.getItem(k); } catch (e) { return memStore[k] || null; }
+    },
+    setItem(k, v) {
+      memStore[k] = v;
+      try { window.localStorage.setItem(k, v); } catch (e) {}
+    },
+    removeItem(k) {
+      delete memStore[k];
+      try { window.localStorage.removeItem(k); } catch (e) {}
+    }
+  };
+
+  if (/iPhone|iPad|iPod/i.test(navigator.userAgent) && window.location.protocol === 'file:') {
+    document.getElementById('safariTipBanner').style.display = 'block';
+  }
+
+  function fmtMoney(n) { return '$' + Math.round(n).toLocaleString('en-US'); }
+  function fmtDec(n, d = 2) { return Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }); }
+
+  function switchTab(id, btn, titleTag) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    if (btn) btn.classList.add('active');
+    if (titleTag) document.getElementById('headerSectionTag').textContent = titleTag;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    if (id === 'tab_weather') updateWeather();
+    if (id === 'tab_alloc') updateTabAlloc();
+    if (id === 'tab_irr') updateTabIRR();
+    if (id === 'tab_dca') updateTabDCA();
+    if (id === 'tab_scanner' && !scannerHasRunOnce) runWatchlistScan();
+  }
+
+  function getPastDateStr(daysAgo) {
+    return new Date(Date.now() - daysAgo * 86400000).toISOString().slice(0, 10);
+  }
+
+  function tsToTaipeiDate(sec) {
+    return new Date(sec * 1000).toLocaleDateString('sv-SE', { timeZone: 'Asia/Taipei' });
+  }
+
+  async function fetchWithTimeout(url, ms = 7500) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), ms);
+    try {
+      return await fetch(url, { signal: ctrl.signal, cache: 'no-store' });
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  async function fetchFinMindData() {
+    const start130 = getPastDateStr(130);
+    const start30 = getPastDateStr(30);
+    const resObj = { idx: null, fx: null, margin: null };
+
+    const [taiexRes, fxRes, marginRes] = await Promise.allSettled([
+      fetchWithTimeout(`https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockPrice&data_id=TAIEX&start_date=${start130}`).then(r => r.json()),
+      fetchWithTimeout(`https://api.finmindtrade.com/api/v4/data?dataset=TaiwanExchangeRate&data_id=USD&start_date=${start130}`).then(r => r.json()),
+      fetchWithTimeout(`https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockTotalMarginPurchaseShortSale&start_date=${start30}`).then(r => r.json())
+    ]);
+
+    if (taiexRes.status === 'fulfilled' && taiexRes.value && Array.isArray(taiexRes.value.data)) {
+      const rows = taiexRes.value.data.filter(r => Number(r.close) > 0);
+      if (rows.length >= 60) {
+        const closes = rows.map(r => Number(r.close));
+        const moneys = rows.map(r => Number(r.Trading_money) / 1e8).filter(v => v > 0);
+        resObj.idx = {
+          date: rows[rows.length - 1].date,
+          now: closes[closes.length - 1],
+          ma20: closes.slice(-20).reduce((a, b) => a + b, 0) / 20,
+          ma60: closes.slice(-60).reduce((a, b) => a + b, 0) / 60,
+          volNow: moneys.length > 0 ? moneys[moneys.length - 1] : null,
+          vol20: moneys.length >= 20 ? moneys.slice(-20).reduce((a, b) => a + b, 0) / 20 : null
+        };
+      }
+    }
+
+    if (fxRes.status === 'fulfilled' && fxRes.value && Array.isArray(fxRes.value.data)) {
+      const rows = fxRes.value.data.filter(r => Number(r.spot_buy) > 0 && Number(r.spot_sell) > 0);
+      if (rows.length >= 60) {
+        const rates = rows.map(r => (Number(r.spot_buy) + Number(r.spot_sell)) / 2);
+        resObj.fx = {
+          date: rows[rows.length - 1].date,
+          now: rates[rates.length - 1],
+          ma20: rates.slice(-20).reduce((a, b) => a + b, 0) / 20,
+          ma60: rates.slice(-60).reduce((a, b) => a + b, 0) / 60
+        };
+      }
+    }
+
+    if (marginRes.status === 'fulfilled' && marginRes.value && Array.isArray(marginRes.value.data)) {
+      const rows = marginRes.value.data.filter(r => r.name === 'MarginPurchaseMoney' && Number(r.TodayBalance) > 0);
+      if (rows.length >= 6) {
+        const latestBal = Number(rows[rows.length - 1].TodayBalance) / 1e8;
+        const prev5Bal = Number(rows[rows.length - 6].TodayBalance) / 1e8;
+        resObj.margin = {
+          date: rows[rows.length - 1].date,
+          now: latestBal,
+          chg5d: latestBal - prev5Bal
+        };
+      }
+    }
+    return resObj;
+  }
+
+  async function fetchYahooSeries(symbol) {
+    const targetUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=6mo&interval=1d`;
+    const loaders = [
+      async () => {
+        const r = await fetchWithTimeout(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`);
+        const w = await r.json();
+        return JSON.parse(w.contents);
+      },
+      async () => {
+        const r = await fetchWithTimeout(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`);
+        return await r.json();
+      }
+    ];
+    for (const loader of loaders) {
+      try {
+        const json = await loader();
+        const result = json && json.chart && json.chart.result && json.chart.result[0];
+        if (!result) continue;
+        const tsList = result.timestamp || [];
+        const closesRaw = (result.indicators.quote[0] && result.indicators.quote[0].close) || [];
+        const pairs = [];
+        for (let i = 0; i < tsList.length; i++) {
+          if (closesRaw[i] !== null && !isNaN(closesRaw[i])) {
+            pairs.push({ ts: tsList[i], close: Number(closesRaw[i]) });
+          }
+        }
+        if (pairs.length >= 60) {
+          const closes = pairs.map(p => p.close);
+          const metaPrice = result.meta && result.meta.regularMarketPrice ? Number(result.meta.regularMarketPrice) : closes[closes.length - 1];
+          const metaTime = result.meta && result.meta.regularMarketTime ? result.meta.regularMarketTime : pairs[pairs.length - 1].ts;
+          return {
+            date: tsToTaipeiDate(metaTime),
+            now: metaPrice,
+            ma20: closes.slice(-20).reduce((a, b) => a + b, 0) / 20,
+            ma60: closes.slice(-60).reduce((a, b) => a + b, 0) / 60
+          };
+        }
+      } catch (e) {}
+    }
+    return null;
+  }
+
+  async function fetchLiveMarketData() {
+    const btn = document.getElementById('btnFetchLive');
+    const status = document.getElementById('fetchStatusText');
+    btn.disabled = true;
+    btn.textContent = '更新中...';
+    status.textContent = '正在連線取得最新行情...';
+    status.style.color = 'var(--primary)';
+
+    const [fm, yhFx, yhIdx] = await Promise.all([
+      fetchFinMindData(),
+      fetchYahooSeries('TWD=X'),
+      fetchYahooSeries('^TWII')
+    ]);
+
+    let updatedCount = 0;
+    const bestFx = (yhFx && (!fm.fx || yhFx.date >= fm.fx.date)) ? yhFx : fm.fx;
+    if (bestFx) {
+      document.getElementById('valFxNow').value = bestFx.now.toFixed(3);
+      document.getElementById('valFx20').value = bestFx.ma20.toFixed(3);
+      document.getElementById('valFx60').value = bestFx.ma60.toFixed(3);
+      document.getElementById('dateFx').textContent = `基準日: ${bestFx.date}`;
+      updatedCount++;
+    }
+
+    const bestIdx = (yhIdx && (!fm.idx || yhIdx.date >= fm.idx.date)) ? yhIdx : fm.idx;
+    if (bestIdx) {
+      document.getElementById('valIdxNow').value = Math.round(bestIdx.now);
+      document.getElementById('valIdx20').value = Math.round(bestIdx.ma20);
+      document.getElementById('valIdx60').value = Math.round(bestIdx.ma60);
+      document.getElementById('dateIdx').textContent = `基準日: ${bestIdx.date}`;
+      updatedCount++;
+    }
+
+    if (fm.idx && fm.idx.volNow && fm.idx.vol20) {
+      document.getElementById('valVolNow').value = Math.round(fm.idx.volNow);
+      document.getElementById('valVol20').value = Math.round(fm.idx.vol20);
+      document.getElementById('dateVol').textContent = `基準日: ${fm.idx.date}`;
+      updatedCount++;
+    }
+
+    if (fm.margin) {
+      document.getElementById('valMarginNow').value = fm.margin.now.toFixed(1);
+      document.getElementById('valMarginChg').value = fm.margin.chg5d.toFixed(1);
+      document.getElementById('dateMargin').textContent = `基準日: ${fm.margin.date}`;
+      updatedCount++;
+    }
+
+    if (updatedCount > 0) {
+      const tStr = new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+      status.textContent = `✅ 已即時更新 (${tStr})`;
+      status.style.color = 'var(--emerald)';
+      recalcFromMetrics();
+    } else {
+      status.textContent = '⚠️ 目前無法連線（可直接點擊下方欄位手動輸入）';
+      status.style.color = 'var(--amber)';
+    }
+
+    btn.disabled = false;
+    btn.textContent = '🔄 更新報價';
+  }
+
+  function recalcFromMetrics() {
+    const fxNow = parseFloat(document.getElementById('valFxNow').value) || 0;
+    const fx20 = parseFloat(document.getElementById('valFx20').value) || 0;
+    const fx60 = parseFloat(document.getElementById('valFx60').value) || 0;
+    if (fxNow > 0 && fx60 > 0) {
+      const biasFx = ((fxNow - fx60) / fx60) * 100;
+      const elFxBias = document.getElementById('dispFxBias');
+      elFxBias.textContent = (biasFx >= 0 ? '+' : '') + biasFx.toFixed(2) + '%';
+      elFxBias.style.color = biasFx < 0 ? 'var(--emerald)' : (biasFx > 0.8 ? 'var(--rose)' : 'var(--amber)');
+      if (fxNow < fx20 && fxNow < fx60) document.getElementById('wFx').value = '2';
+      else if (fxNow > fx20 && fxNow > fx60 && fx20 >= fx60) document.getElementById('wFx').value = '0';
+      else document.getElementById('wFx').value = '1';
+    }
+
+    const m1b = parseFloat(document.getElementById('valM1b').value);
+    const m2 = parseFloat(document.getElementById('valM2').value);
+    if (!isNaN(m1b) && !isNaN(m2)) {
+      const diff = m1b - m2;
+      const elDiff = document.getElementById('dispM1bDiff');
+      elDiff.textContent = (diff >= 0 ? '+' : '') + diff.toFixed(2) + '%';
+      elDiff.style.color = diff >= 0 ? 'var(--emerald)' : (m1b < 0 ? 'var(--rose)' : 'var(--amber)');
+      if (m1b > 0 && m2 > 0 && m1b >= m2) document.getElementById('wM1b').value = '2';
+      else if (m1b <= 0) document.getElementById('wM1b').value = '0';
+      else document.getElementById('wM1b').value = '1';
+    }
+
+    const volNow = parseFloat(document.getElementById('valVolNow').value) || 0;
+    const vol20 = parseFloat(document.getElementById('valVol20').value) || 0;
+    if (volNow > 0 && vol20 > 0) {
+      const ratio = volNow / vol20;
+      const elVol = document.getElementById('dispVolRatio');
+      elVol.textContent = ratio.toFixed(2) + 'x';
+      elVol.style.color = ratio >= 1.0 ? 'var(--emerald)' : (ratio < 0.75 ? 'var(--rose)' : 'var(--amber)');
+      if (ratio >= 1.0) document.getElementById('wVol').value = '2';
+      else if (ratio < 0.75) document.getElementById('wVol').value = '0';
+      else document.getElementById('wVol').value = '1';
+    }
+
+    const idxNow = parseFloat(document.getElementById('valIdxNow').value) || 0;
+    const idx20 = parseFloat(document.getElementById('valIdx20').value) || 0;
+    const idx60 = parseFloat(document.getElementById('valIdx60').value) || 0;
+    if (idxNow > 0 && idx60 > 0) {
+      const biasIdx = ((idxNow - idx60) / idx60) * 100;
+      const elIdxBias = document.getElementById('dispIdxBias');
+      elIdxBias.textContent = (biasIdx >= 0 ? '+' : '') + biasIdx.toFixed(2) + '%';
+      elIdxBias.style.color = biasIdx > 0 ? 'var(--emerald)' : 'var(--rose)';
+      if (idxNow > idx20 && idxNow > idx60 && idx20 >= idx60) document.getElementById('wTrend').value = '2';
+      else if (idxNow < idx20 && idxNow < idx60 && idx20 <= idx60) document.getElementById('wTrend').value = '0';
+      else document.getElementById('wTrend').value = '1';
+    }
+
+    const mChg = parseFloat(document.getElementById('valMarginChg').value);
+    if (!isNaN(mChg)) {
+      const elM = document.getElementById('dispMarginState');
+      if (mChg > 150 || (idxNow > 0 && idxNow < idx20 && mChg > 50)) {
+        elM.textContent = '過熱/凌亂';
+        elM.style.color = 'var(--rose)';
+        document.getElementById('wSent').value = '0';
+      } else if (mChg <= -80) {
+        elM.textContent = '清洗浮額';
+        elM.style.color = 'var(--amber)';
+        document.getElementById('wSent').value = '1';
+      } else if (mChg > -80 && mChg <= 80) {
+        elM.textContent = '溫和健康';
+        elM.style.color = 'var(--emerald)';
+        document.getElementById('wSent').value = '2';
+      } else {
+        elM.textContent = '籌碼整理';
+        elM.style.color = 'var(--amber)';
+        document.getElementById('wSent').value = '1';
+      }
+    }
+    updateWeather();
+  }
+
+  let latestWeatherRec = { cash: 20, growth: 45, div: 35 };
+
+  function updateWeather() {
+    const liqScore = parseInt(document.getElementById('wFx').value, 10)
+                   + parseInt(document.getElementById('wM1b').value, 10)
+                   + parseInt(document.getElementById('wVol').value, 10);
+    const windScore = parseInt(document.getElementById('wTrend').value, 10)
+                    + parseInt(document.getElementById('wSent').value, 10);
+    const totalScore = liqScore + windScore;
+
+    document.getElementById('wLiqScore').textContent = `${liqScore} / 6 分`;
+    document.getElementById('wLiqBadge').innerHTML = liqScore >= 5
+      ? '<span class="badge badge-green">🟢 資金充沛</span>'
+      : (liqScore >= 3 ? '<span class="badge badge-amber">🟡 資金中性</span>' : '<span class="badge badge-red">🔴 資金緊縮</span>');
+
+    document.getElementById('wWindScore').textContent = `${windScore} / 4 分`;
+    document.getElementById('wWindBadge').innerHTML = windScore >= 3
+      ? '<span class="badge badge-green">🟢 順風多頭</span>'
+      : (windScore === 2 ? '<span class="badge badge-amber">🟡 盤整拉鋸</span>' : '<span class="badge badge-red">🔴 逆風空頭</span>');
+
+    let cashPct, growthPct, divPct, boxBg, boxColor, title, desc;
+    if (totalScore >= 8) {
+      cashPct = 10; growthPct = 60; divPct = 30;
+      boxBg = 'var(--emerald-bg)'; boxColor = 'var(--emerald)';
+      title = `🟢 積極順風多頭（${totalScore}/10 分）`;
+      desc = '資金活水充沛且大盤站穩多頭排列，可維持 90% 持股水位，強勢主流股分批順勢加碼。';
+    } else if (totalScore >= 6) {
+      cashPct = 20; growthPct = 45; divPct = 35;
+      boxBg = 'var(--emerald-bg)'; boxColor = 'var(--emerald)';
+      title = `🟢 穩健偏多環境（${totalScore}/10 分）`;
+      desc = '資金與趨勢整體正向，保留 20% 彈性現金，其餘 80% 採成長與存股雙軌並行。';
+    } else if (totalScore >= 4) {
+      cashPct = 35; growthPct = 25; divPct = 40;
+      boxBg = 'var(--amber-bg)'; boxColor = 'var(--amber)';
+      title = `🟡 中性震盪格局（${totalScore}/10 分）`;
+      desc = '多空拉鋸，建議提高現金至 35%，降低追價比重，改以定期定額或高股息逢回低接。';
+    } else {
+      cashPct = 55; growthPct = 10; divPct = 35;
+      boxBg = 'var(--rose-bg)'; boxColor = 'var(--rose)';
+      title = `🔴 逆風防禦警戒（${totalScore}/10 分）`;
+      desc = '資金退潮且均線反壓，拉高現金至 55% 以上，嚴格執行強勢股停損，保留存股安全氣囊。';
+    }
+
+    latestWeatherRec = { cash: cashPct, growth: growthPct, div: divPct };
+    document.getElementById('wCashRec').textContent = `${cashPct}%`;
+    document.getElementById('recGrowthPct').textContent = `${growthPct}%`;
+    document.getElementById('recDivPct').textContent = `${divPct}%`;
+
+    const sBox = document.getElementById('wStrategyBox');
+    sBox.style.background = boxBg;
+    sBox.style.borderLeftColor = boxColor;
+    document.getElementById('wStrategyTitle').style.color = boxColor;
+    document.getElementById('wStrategyTitle').textContent = title;
+    document.getElementById('wStrategyDesc').textContent = desc;
+
+    drawWeatherGauge(totalScore);
+  }
+
+  function drawWeatherGauge(score) {
+    const svg = document.getElementById('weatherGaugeSvg');
+    const cx = 210, cy = 180, r = 132;
+    const angle = Math.PI - (score / 10) * Math.PI;
+    const tipX = cx + (r - 15) * Math.cos(angle);
+    const tipY = cy - (r - 15) * Math.sin(angle);
+    const baseR = r + 16;
+    const spread = 0.06;
+    const b1x = cx + baseR * Math.cos(angle - spread);
+    const b1y = cy - baseR * Math.sin(angle - spread);
+    const b2x = cx + baseR * Math.cos(angle + spread);
+    const b2y = cy - baseR * Math.sin(angle + spread);
+
+    let moodColor = '#059669', moodText = '順風多頭區';
+    if (score <= 3) { moodColor = '#e11d48'; moodText = '逆風警戒區'; }
+    else if (score <= 5) { moodColor = '#d97706'; moodText = '中性觀望區'; }
+
+    svg.innerHTML = `
+      <path d="M 78 180 A 132 132 0 0 1 144 65" fill="none" stroke="#fda4af" stroke-width="22"/>
+      <path d="M 144 65 A 132 132 0 0 1 276 65" fill="none" stroke="#fcd34d" stroke-width="22"/>
+      <path d="M 276 65 A 132 132 0 0 1 342 180" fill="none" stroke="#6ee7b7" stroke-width="22"/>
+      <polygon points="${tipX.toFixed(1)},${tipY.toFixed(1)} ${b1x.toFixed(1)},${b1y.toFixed(1)} ${b2x.toFixed(1)},${b2y.toFixed(1)}" fill="#0f172a"/>
+      <text x="64" y="202" font-size="11" fill="#e11d48" font-weight="700" text-anchor="middle">0分 緊縮</text>
+      <text x="210" y="32" font-size="11" fill="#d97706" font-weight="700" text-anchor="middle">5分 中性</text>
+      <text x="356" y="202" font-size="11" fill="#059669" font-weight="700" text-anchor="middle">10分 充沛</text>
+      <text x="${cx}" y="144" font-size="30" font-weight="800" fill="${moodColor}" text-anchor="middle">${score} / 10 分</text>
+      <text x="${cx}" y="168" font-size="13" font-weight="700" fill="#475569" text-anchor="middle">${moodText}</text>
+    `;
+  }
+
+  function applyWeatherToAlloc() {
+    document.getElementById('pctCash').value = latestWeatherRec.cash;
+    document.getElementById('pctGrowth').value = latestWeatherRec.growth;
+    document.getElementById('pctDiv').value = latestWeatherRec.div;
+    const banner = document.getElementById('weatherSyncBanner');
+    banner.style.display = 'block';
+    banner.textContent = `已套用溫度計建議：現金 ${latestWeatherRec.cash}% ／ 成長 ${latestWeatherRec.growth}% ／ 存股 ${latestWeatherRec.div}%`;
+    switchTab('tab_alloc', document.querySelectorAll('.nav-btn')[1], '2. 資產配置');
+  }
+
+  let lastEditedAllocField = 'growth';
+
+  function setStage(c, g, d, yld) {
+    document.getElementById('pctCash').value = c;
+    document.getElementById('pctGrowth').value = g;
+    document.getElementById('pctDiv').value = d;
+    document.getElementById('stageYield').value = yld;
+    document.getElementById('weatherSyncBanner').style.display = 'none';
+    updateTabAlloc();
+  }
+
+  function onCustomPctInput(field) {
+    lastEditedAllocField = field;
+    document.getElementById('weatherSyncBanner').style.display = 'none';
+    updateTabAlloc();
+  }
+
+  function onSliderMove() {
+    const cPct = Math.min(100, Math.max(0, parseFloat(document.getElementById('pctCash').value) || 0));
+    const rem = Math.max(0, 100 - cPct);
+    const sliderVal = parseInt(document.getElementById('growthSlider').value, 10);
+    const gPct = Math.round((rem * sliderVal) / 100);
+    const dPct = +(rem - gPct).toFixed(1);
+    document.getElementById('pctGrowth').value = gPct;
+    document.getElementById('pctDiv').value = dPct;
+    updateTabAlloc();
+  }
+
+  function autoBalanceAlloc() {
+    const cPct = Math.max(0, parseFloat(document.getElementById('pctCash').value) || 0);
+    const gPct = Math.max(0, parseFloat(document.getElementById('pctGrowth').value) || 0);
+    const dPct = Math.max(0, parseFloat(document.getElementById('pctDiv').value) || 0);
+    if (lastEditedAllocField === 'cash') {
+      const rem = Math.max(0, 100 - cPct);
+      const gdSum = gPct + dPct;
+      if (gdSum > 0) {
+        const newG = Math.round((rem * gPct) / gdSum);
+        document.getElementById('pctGrowth').value = newG;
+        document.getElementById('pctDiv').value = +(rem - newG).toFixed(1);
+      } else {
+        document.getElementById('pctGrowth').value = Math.round(rem / 2);
+        document.getElementById('pctDiv').value = +(rem - Math.round(rem / 2)).toFixed(1);
+      }
+    } else if (lastEditedAllocField === 'growth') {
+      document.getElementById('pctDiv').value = Math.max(0, +(100 - cPct - gPct).toFixed(1));
+    } else {
+      document.getElementById('pctGrowth').value = Math.max(0, +(100 - cPct - dPct).toFixed(1));
+    }
+    updateTabAlloc();
+  }
+
+  function updateTabAlloc() {
+    const cap = Math.max(0, parseFloat(document.getElementById('totalCap').value) || 0);
+    const yld = Math.max(0, parseFloat(document.getElementById('stageYield').value) || 0);
+    const cPct = Math.max(0, parseFloat(document.getElementById('pctCash').value) || 0);
+    const gPct = Math.max(0, parseFloat(document.getElementById('pctGrowth').value) || 0);
+    const dPct = Math.max(0, parseFloat(document.getElementById('pctDiv').value) || 0);
+
+    const sumPct = +(cPct + gPct + dPct).toFixed(1);
+    const sumBadge = document.getElementById('allocSumBadge');
+    const balBtn = document.getElementById('btnAutoBalance');
+
+    if (Math.abs(sumPct - 100) < 0.05) {
+      sumBadge.className = 'badge badge-green';
+      sumBadge.textContent = '✅ 總計：100%';
+      balBtn.style.display = 'none';
+    } else {
+      const diff = +(100 - sumPct).toFixed(1);
+      sumBadge.className = 'badge badge-amber';
+      sumBadge.textContent = `⚠️ 總和 ${sumPct}% (${diff > 0 ? '餘' + diff + '%' : '超' + Math.abs(diff) + '%'})`;
+      balBtn.style.display = 'inline-flex';
+    }
+
+    const gdTotal = gPct + dPct;
+    document.getElementById('growthSlider').value = gdTotal > 0 ? Math.round((gPct / gdTotal) * 100) : 0;
+
+    const normDiv = sumPct > 0 ? sumPct : 100;
+    document.getElementById('barCash').style.width = ((cPct / normDiv) * 100) + '%';
+    document.getElementById('barGrowth').style.width = ((gPct / normDiv) * 100) + '%';
+    document.getElementById('barDiv').style.width = ((dPct / normDiv) * 100) + '%';
+
+    const cAmt = cap * (cPct / 100);
+    const gAmt = cap * (gPct / 100);
+    const dAmt = cap * (dPct / 100);
+    const annDiv = dAmt * (yld / 100);
+
+    document.getElementById('cashAmt').textContent = fmtMoney(cAmt);
+    document.getElementById('growthAmt').textContent = fmtMoney(gAmt);
+    document.getElementById('divAmt').textContent = fmtMoney(dAmt);
+    document.getElementById('estAnnualDiv').textContent = fmtMoney(annDiv);
+    document.getElementById('estMonthlyDiv').textContent = '月均約 ' + fmtMoney(annDiv / 12);
+
+    renderCustomRows();
+  }
+
+  function getCustomRows() {
+    const saved = safeStorage.getItem('wealth_custom_alloc_rows');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return [
+      { ticker: '00878 / 00919 高股息', cat: 'div', pct: 50, yld: 8.5 },
+      { ticker: '0050 / 主流成長龍頭', cat: 'growth', pct: 30, yld: 3.0 },
+      { ticker: '高利活存 / 短債防禦', cat: 'cash', pct: 20, yld: 1.5 }
+    ];
+  }
+
+  function saveCustomRows(rows) {
+    safeStorage.setItem('wealth_custom_alloc_rows', JSON.stringify(rows));
+  }
+
+  function addCustomRow() {
+    const rows = getCustomRows();
+    rows.push({ ticker: '自訂標的', cat: 'div', pct: 10, yld: 6.0 });
+    saveCustomRows(rows);
+    renderCustomRows();
+  }
+
+  function removeCustomRow(idx) {
+    const rows = getCustomRows();
+    rows.splice(idx, 1);
+    saveCustomRows(rows);
+    renderCustomRows();
+  }
+
+  function updateCustomRow(idx, key, val) {
+    const rows = getCustomRows();
+    if (!rows[idx]) return;
+    if (key === 'pct' || key === 'yld') rows[idx][key] = Math.max(0, parseFloat(val) || 0);
+    else rows[idx][key] = val;
+    saveCustomRows(rows);
+    renderCustomRows();
+  }
+
+  function renderCustomRows() {
+    const container = document.getElementById('customAllocList');
+    if (!container) return;
+    const rows = getCustomRows();
+    const cap = Math.max(0, parseFloat(document.getElementById('totalCap').value) || 0);
+
+    let sumPct = 0, sumDiv = 0;
+    container.innerHTML = rows.map((r, i) => {
+      const amt = cap * (r.pct / 100);
+      const annD = amt * (r.yld / 100);
+      sumPct += r.pct;
+      sumDiv += annD;
+      return `
+        <div class="mobile-list-card">
+          <div style="display:flex; gap:8px; margin-bottom:8px;">
+            <input type="text" value="${r.ticker}" onchange="updateCustomRow(${i}, 'ticker', this.value)" style="flex:1;">
+            <button class="btn btn-sm" style="color:var(--rose);" onclick="removeCustomRow(${i})">✕</button>
+          </div>
+          <div class="grid-3" style="grid-template-columns: 1.2fr 0.9fr 0.9fr; gap:8px; margin-bottom:6px;">
+            <div>
+              <label>類別</label>
+              <select onchange="updateCustomRow(${i}, 'cat', this.value)" style="padding:6px; min-height:38px;">
+                <option value="cash" ${r.cat === 'cash' ? 'selected' : ''}>💵 現金</option>
+                <option value="growth" ${r.cat === 'growth' ? 'selected' : ''}>🚀 成長</option>
+                <option value="div" ${r.cat === 'div' ? 'selected' : ''}>🛡️ 存股</option>
+              </select>
+            </div>
+            <div>
+              <label>比例(%)</label>
+              <input type="number" value="${r.pct}" step="1" oninput="updateCustomRow(${i}, 'pct', this.value)" style="padding:6px; min-height:38px;">
+            </div>
+            <div>
+              <label>殖利率(%)</label>
+              <input type="number" value="${r.yld}" step="0.1" oninput="updateCustomRow(${i}, 'yld', this.value)" style="padding:6px; min-height:38px;">
+            </div>
+          </div>
+          <div class="ml-row">
+            <span>配置金額：<strong>${fmtMoney(amt)}</strong></span>
+            <span>年領股息：<strong class="pos">${fmtMoney(annD)}</strong></span>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    const pctEl = document.getElementById('customRowsPctSum');
+    pctEl.textContent = sumPct.toFixed(1) + '%';
+    pctEl.className = Math.abs(sumPct - 100) < 0.05 ? 'pos' : 'neg';
+    document.getElementById('customRowsDivSum').textContent = fmtMoney(sumDiv);
+  }
+
+  function syncRowsToTop() {
+    const rows = getCustomRows();
+    let c = 0, g = 0, d = 0, divWeighted = 0;
+    rows.forEach(r => {
+      if (r.cat === 'cash') c += r.pct;
+      else if (r.cat === 'growth') g += r.pct;
+      else { d += r.pct; divWeighted += r.pct * r.yld; }
+    });
+    document.getElementById('pctCash').value = +c.toFixed(1);
+    document.getElementById('pctGrowth').value = +g.toFixed(1);
+    document.getElementById('pctDiv').value = +d.toFixed(1);
+    if (d > 0) document.getElementById('stageYield').value = +(divWeighted / d).toFixed(2);
+    updateTabAlloc();
+  }
+
+  function syncToIRR() {
+    const yld = parseFloat(document.getElementById('stageYield').value) || 8.0;
+    const price = 25.0;
+    const div = +(price * (yld / 100)).toFixed(2);
+    document.getElementById('buyPrice').value = price;
+    document.getElementById('annDiv').value = div;
+    switchTab('tab_irr', document.querySelectorAll('.nav-btn')[2], '3. IRR 精算');
+  }
+
+  function calcIRR(cashflows) {
+    if (!cashflows || cashflows[0] >= 0) return null;
+    const inflow = cashflows.slice(1).reduce((a, b) => a + b, 0);
+    if (inflow <= 0) return -1.0;
+
+    const npv = (r) => {
+      let s = 0;
+      for (let t = 0; t < cashflows.length; t++) s += cashflows[t] / Math.pow(1 + r, t);
+      return s;
+    };
+
+    let low = -0.999999, high = 10.0;
+    let npvLow = npv(low), npvHigh = npv(high);
+    while (npvLow * npvHigh > 0 && high < 1e5) { high *= 2; npvHigh = npv(high); }
+    if (npvLow * npvHigh > 0) return null;
+
+    for (let i = 0; i < 120; i++) {
+      const mid = (low + high) / 2;
+      const npvMid = npv(mid);
+      if (Math.abs(npvMid) < 1e-7 || (high - low) / 2 < 1e-7) return mid;
+      if (npvLow * npvMid < 0) high = mid;
+      else { low = mid; npvLow = npvMid; }
+    }
+    return (low + high) / 2;
+  }
+
+  function setIRRPreset(p, d, y) {
+    document.getElementById('buyPrice').value = p;
+    document.getElementById('annDiv').value = d;
+    document.getElementById('holdYears').value = y;
+    document.getElementById('customEndPrice').value = +(p * 0.75).toFixed(2);
+    updateTabIRR();
+  }
+
+  function updateTabIRR() {
+    const price = Math.max(0.1, parseFloat(document.getElementById('buyPrice').value) || 100);
+    const div = Math.max(0, parseFloat(document.getElementById('annDiv').value) || 0);
+    const years = parseInt(document.getElementById('holdYears').value, 10);
+
+    document.getElementById('holdYearsVal').textContent = years;
+    document.getElementById('beYearSpan').textContent = years;
+
+    const yld = (div / price) * 100;
+    const payback = div > 0 ? price / div : Infinity;
+    const totalDiv = div * years;
+    const divRatio = (totalDiv / price) * 100;
+    const breakeven = Math.max(0, price - totalDiv);
+
+    document.getElementById('kpiYield').textContent = yld.toFixed(2) + '%';
+    if (isFinite(payback)) {
+      document.getElementById('kpiPayback').textContent = payback.toFixed(2) + ' 年';
+      document.getElementById('kpiPaybackBadge').innerHTML = years >= payback
+        ? '<span class="badge badge-green">已跨過回本安全線</span>'
+        : '<span class="badge badge-amber">尚差 ' + (payback - years).toFixed(1) + ' 年</span>';
+    } else {
+      document.getElementById('kpiPayback').textContent = '無法回本';
+      document.getElementById('kpiPaybackBadge').innerHTML = '<span class="badge badge-red">無配息</span>';
+    }
+    document.getElementById('kpiTotalDiv').textContent = '$' + fmtDec(totalDiv, 2);
+    document.getElementById('kpiDivRatio').textContent = '回收 ' + divRatio.toFixed(1) + '% 本金';
+    document.getElementById('kpiBreakeven').textContent = '$' + fmtDec(breakeven, 2);
+
+    const scenarios = [
+      { label: '極端歸零 (-100%)', pct: -1.0 },
+      { label: '股價腰斬 (-50%)', pct: -0.5 },
+      { label: '波段回檔 (-20%)', pct: -0.2 },
+      { label: '股價持平 (0%)', pct: 0.0 },
+      { label: '溫和上漲 (+20%)', pct: 0.2 },
+      { label: '股價翻倍 (+100%)', pct: 1.0 }
+    ];
+
+    const cardsBox = document.getElementById('irrScenarioCards');
+    cardsBox.innerHTML = scenarios.map(s => {
+      const endP = +(price * (1 + s.pct)).toFixed(2);
+      const cf = [-price];
+      for (let t = 1; t < years; t++) cf.push(div);
+      cf.push(div + endP);
+      const irr = calcIRR(cf);
+      const totalRet = totalDiv + endP;
+      const profit = totalRet - price;
+      const irrStr = irr !== null ? ((irr >= 0 ? '+' : '') + (irr * 100).toFixed(2) + '%') : 'N/A';
+      const cls = irr >= 0 ? 'pos' : 'neg';
+      return `
+        <div class="mobile-list-card" style="padding:10px 12px; margin-bottom:8px;">
+          <div class="ml-top" style="margin-bottom:4px;">
+            <strong style="font-size:13.5px;">${s.label}</strong>
+            <span class="${cls}" style="font-size:16px;">IRR ${irrStr}</span>
+          </div>
+          <div class="ml-row">
+            <span>期末股價：$${fmtDec(endP, 2)}</span>
+            <span>總回收：$${fmtDec(totalRet, 2)} (<span class="${profit >= 0 ? 'pos' : 'neg'}">${profit >= 0 ? '+' : ''}${fmtDec(profit, 1)}</span>)</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    const custP = Math.max(0, parseFloat(document.getElementById('customEndPrice').value) || 0);
+    const custCf = [-price];
+    for (let t = 1; t < years; t++) custCf.push(div);
+    custCf.push(div + custP);
+    const custIrr = calcIRR(custCf);
+    const custRet = totalDiv + custP;
+    document.getElementById('custTotal').textContent = '$' + fmtDec(custRet, 2);
+    const custIrrEl = document.getElementById('custIRR');
+    custIrrEl.className = custIrr >= 0 ? 'pos' : 'neg';
+    custIrrEl.textContent = custIrr !== null ? ((custIrr >= 0 ? '+' : '') + (custIrr * 100).toFixed(2) + '%') : 'N/A';
+
+    drawIRRSvg(price, div, years);
+  }
+
+  function drawIRRSvg(price, div, activeYear) {
+    const svg = document.getElementById('irrSvg');
+    const W = 520, H = 290;
+    const padL = 46, padR = 16, padT = 24, padB = 34;
+    const plotW = W - padL - padR, plotH = H - padT - padB;
+
+    const ptsZero = [], ptsFlat = [], ptsDouble = [];
+    for (let y = 1; y <= 50; y++) {
+      const cf0 = [-price], cf1 = [-price], cf2 = [-price];
+      for (let t = 1; t < y; t++) { cf0.push(div); cf1.push(div); cf2.push(div); }
+      cf0.push(div + 0); cf1.push(div + price); cf2.push(div + price * 2);
+      ptsZero.push({ y, v: (calcIRR(cf0) ?? -1) * 100 });
+      ptsFlat.push({ y, v: (calcIRR(cf1) ?? 0) * 100 });
+      ptsDouble.push({ y, v: (calcIRR(cf2) ?? 0) * 100 });
+    }
+
+    const minY = -40, maxY = 40;
+    const clamp = v => Math.max(minY, Math.min(maxY, v));
+    const mapX = y => padL + ((y - 1) / 49) * plotW;
+    const mapY = v => padT + ((maxY - clamp(v)) / (maxY - minY)) * plotH;
+    const toPath = arr => arr.map((p, i) => `${i === 0 ? 'M' : 'L'}${mapX(p.y).toFixed(1)},${mapY(p.v).toFixed(1)}`).join(' ');
+
+    const activeX = mapX(activeYear);
+    let gridHtml = '';
+    [-30, -15, 0, 15, 30].forEach(val => {
+      const gy = mapY(val);
+      gridHtml += `<line x1="${padL}" y1="${gy}" x2="${W - padR}" y2="${gy}" stroke="${val === 0 ? '#94a3b8' : '#e2e8f0'}" stroke-dasharray="${val === 0 ? '4,3' : '0'}" stroke-width="1"/>`;
+      gridHtml += `<text x="${padL - 6}" y="${gy + 4}" text-anchor="end" font-size="11" fill="#64748b">${val}%</text>`;
+    });
+    [1, 10, 20, 30, 40, 50].forEach(yr => {
+      const gx = mapX(yr);
+      gridHtml += `<text x="${gx}" y="${H - 10}" text-anchor="middle" font-size="11" fill="#64748b">${yr}年</text>`;
+    });
+
+    svg.innerHTML = `
+      ${gridHtml}
+      <line x1="${activeX}" y1="${padT}" x2="${activeX}" y2="${H - padB}" stroke="#2563eb" stroke-width="1.5" stroke-dasharray="3,3"/>
+      <path d="${toPath(ptsDouble)}" fill="none" stroke="#10b981" stroke-width="2.4"/>
+      <path d="${toPath(ptsFlat)}" fill="none" stroke="#2563eb" stroke-width="2.4"/>
+      <path d="${toPath(ptsZero)}" fill="none" stroke="#e11d48" stroke-width="2.4"/>
+      <g transform="translate(${padL + 6}, ${padT + 4})">
+        <rect x="0" y="0" width="10" height="3" fill="#10b981"/><text x="14" y="4" font-size="11" fill="#334155">翻倍 (+100%)</text>
+        <rect x="112" y="0" width="10" height="3" fill="#2563eb"/><text x="126" y="4" font-size="11" fill="#334155">持平 (0%)</text>
+        <rect x="206" y="0" width="10" height="3" fill="#e11d48"/><text x="220" y="4" font-size="11" fill="#334155">歸零 (-100%)</text>
+      </g>
+    `;
+  }
+
+  function updateTabDCA() {
+    const monthly = Math.max(1000, parseFloat(document.getElementById('dcaAmt').value) || 10000);
+    const months = Math.min(180, Math.max(12, parseInt(document.getElementById('dcaMonths').value, 10) || 60));
+    const targetPct = Math.max(1, parseFloat(document.getElementById('tpTarget').value) || 15) / 100;
+    const scenario = document.getElementById('marketScenario').value;
+
+    const prices = [];
+    for (let m = 0; m < months; m++) {
+      let p = 100;
+      if (scenario === 'bull') p = 100 * Math.pow(1.0085, m) + 5 * Math.sin(m / 3);
+      else if (scenario === 'shock') {
+        const trend = 100 * Math.pow(1.008, m);
+        const shockCenter = Math.floor(months * 0.45);
+        const dist = (m - shockCenter) / (months * 0.12);
+        p = trend * (1 - 0.32 * Math.exp(-0.5 * dist * dist)) + 3 * Math.sin(m / 2.5);
+      } else p = 100 + 18 * Math.sin(m / 4.2) + 6 * Math.cos(m / 2);
+      prices.push(Math.max(30, p));
+    }
+
+    let bhShares = 0, tpShares = 0, tpCostBasis = 0, tpLockedCash = 0, tpCount = 0;
+    const curveTP = [], curveBH = [];
+
+    for (let m = 0; m < months; m++) {
+      const p = prices[m];
+      bhShares += monthly / p;
+      curveBH.push(bhShares * p);
+
+      tpShares += monthly / p;
+      tpCostBasis += monthly;
+      const curMarketVal = tpShares * p;
+      if ((curMarketVal - tpCostBasis) / tpCostBasis >= targetPct) {
+        tpLockedCash += curMarketVal;
+        tpShares = 0; tpCostBasis = 0; tpCount++;
+      }
+      curveTP.push(tpLockedCash + tpShares * p);
+    }
+
+    const principal = monthly * months;
+    const finalTP = curveTP[months - 1];
+    const finalBH = curveBH[months - 1];
+    const diff = finalTP - finalBH;
+
+    document.getElementById('dcaPrincipal').textContent = fmtMoney(principal);
+    document.getElementById('tpFinalVal').textContent = fmtMoney(finalTP);
+    document.getElementById('tpTriggerInfo').textContent = `停利 ${tpCount} 次 (${(((finalTP - principal)/principal)*100).toFixed(1)}%)`;
+    document.getElementById('bhFinalVal').textContent = fmtMoney(finalBH);
+    document.getElementById('bhReturnInfo').textContent = `報酬率 ${(((finalBH - principal)/principal)*100).toFixed(1)}%`;
+    document.getElementById('dcaDiff').className = 'kpi-val ' + (diff >= 0 ? 'pos' : 'neg');
+    document.getElementById('dcaDiff').textContent = (diff >= 0 ? '+' : '') + fmtMoney(diff);
+    document.getElementById('tpLockedCash').textContent = `已落袋：${fmtMoney(tpLockedCash)}`;
+
+    drawDCASvg(curveTP, curveBH, principal);
+  }
+
+  function drawDCASvg(curveTP, curveBH, principal) {
+    const svg = document.getElementById('dcaSvg');
+    const W = 640, H = 260;
+    const padL = 62, padR = 16, padT = 26, padB = 30;
+    const plotW = W - padL - padR, plotH = H - padT - padB;
+    const maxV = Math.max(...curveTP, ...curveBH, principal) * 1.08;
+    const n = curveTP.length;
+
+    const mapX = i => padL + (i / Math.max(1, n - 1)) * plotW;
+    const mapY = v => padT + ((maxV - v) / maxV) * plotH;
+    const pathTP = curveTP.map((v, i) => `${i === 0 ? 'M' : 'L'}${mapX(i).toFixed(1)},${mapY(v).toFixed(1)}`).join(' ');
+    const pathBH = curveBH.map((v, i) => `${i === 0 ? 'M' : 'L'}${mapX(i).toFixed(1)},${mapY(v).toFixed(1)}`).join(' ');
+
+    let grid = '';
+    for (let k = 0; k <= 4; k++) {
+      const val = (maxV / 4) * k;
+      const y = mapY(val);
+      grid += `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="#e2e8f0" stroke-width="1"/>`;
+      grid += `<text x="${padL - 6}" y="${y + 4}" text-anchor="end" font-size="11" fill="#64748b">$${Math.round(val / 10000)}萬</text>`;
+    }
+
+    svg.innerHTML = `
+      ${grid}
+      <path d="${pathBH}" fill="none" stroke="#94a3b8" stroke-width="2.2" stroke-dasharray="5,4"/>
+      <path d="${pathTP}" fill="none" stroke="#2563eb" stroke-width="2.8"/>
+      <g transform="translate(${padL + 8}, ${padT - 8})">
+        <rect x="0" y="0" width="12" height="3" fill="#2563eb"/><text x="16" y="4" font-size="11" font-weight="700" fill="#0f172a">停利不停扣總資產</text>
+        <rect x="145" y="0" width="12" height="3" fill="#94a3b8"/><text x="161" y="4" font-size="11" fill="#475569">單純抱上抱下</text>
+      </g>
+    `;
+  }
+
+  let scannerHasRunOnce = false;
+  let latestScanResults = {};
+
+  function getScanWatchlist() {
+    const saved = safeStorage.getItem('wealth_scan_watchlist');
+    if (saved) {
+      try {
+        const arr = JSON.parse(saved);
+        if (Array.isArray(arr) && arr.length > 0) return arr;
+      } catch (e) {}
+    }
+    return ['2330', '6147', '0050', '00878', '00919'];
+  }
+
+  function saveScanWatchlist(list) {
+    safeStorage.setItem('wealth_scan_watchlist', JSON.stringify(list));
+  }
+
+  function resetDefaultScanList() {
+    saveScanWatchlist(['2330', '6147', '0050', '00878', '00919']);
+    runWatchlistScan();
+  }
+
+  function addScanTickers() {
+    const inp = document.getElementById('newScanTicker');
+    const raw = inp.value.trim().toUpperCase();
+    if (!raw) return;
+    const parts = raw.replace(/，/g, ',').replace(/\s+/g, ',').split(',').map(s => s.trim()).filter(Boolean);
+    const list = getScanWatchlist();
+    parts.forEach(p => {
+      const clean = p.replace(/\.TWO?$/i, '');
+      if (clean && !list.includes(clean)) list.push(clean);
+    });
+    saveScanWatchlist(list);
+    inp.value = '';
+    runWatchlistScan();
+  }
+
+  function removeScanTicker(code) {
+    const list = getScanWatchlist().filter(item => item !== code);
+    saveScanWatchlist(list);
+    runWatchlistScan();
+  }
+
+  async function fetchSingleStockHistory(rawCode) {
+    const code = rawCode.replace(/\.TWO?$/i, '').trim();
+    const start150 = getPastDateStr(150);
+
+    try {
+      const fmUrl = `https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockPrice&data_id=${encodeURIComponent(code)}&start_date=${start150}`;
+      const res = await fetchWithTimeout(fmUrl, 7500);
+      if (res.ok) {
+        const json = await res.json();
+        if (json && Array.isArray(json.data)) {
+          const rows = json.data.filter(r => Number(r.close) > 0 && Number(r.max) > 0 && Number(r.min) > 0);
+          if (rows.length >= 60) {
+            return {
+              symbol: code,
+              bars: rows.map(r => ({
+                date: r.date,
+                open: Number(r.open) || Number(r.close),
+                high: Number(r.max),
+                low: Number(r.min),
+                close: Number(r.close),
+                volume: Number(r.Trading_Volume) || 0
+              }))
+            };
+          }
+        }
+      }
+    } catch (e) {}
+
+    const suffixes = rawCode.includes('.') ? [rawCode] : [`${code}.TW`, `${code}.TWO`];
+    for (const sym of suffixes) {
+      const targetUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?range=6mo&interval=1d`;
+      const loaders = [
+        async () => {
+          const r = await fetchWithTimeout(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`, 7000);
+          const w = await r.json();
+          return JSON.parse(w.contents);
+        },
+        async () => {
+          const r = await fetchWithTimeout(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`, 7000);
+          return await r.json();
+        }
+      ];
+      for (const loader of loaders) {
+        try {
+          const json = await loader();
+          const result = json && json.chart && json.chart.result && json.chart.result[0];
+          if (!result) continue;
+          const ts = result.timestamp || [];
+          const q = result.indicators.quote[0] || {};
+          const bars = [];
+          for (let i = 0; i < ts.length; i++) {
+            if (q.close && q.close[i] != null && q.high && q.high[i] != null && q.low && q.low[i] != null) {
+              bars.push({
+                date: tsToTaipeiDate(ts[i]),
+                open: Number(q.open[i] ?? q.close[i]),
+                high: Number(q.high[i]),
+                low: Number(q.low[i]),
+                close: Number(q.close[i]),
+                volume: Number((q.volume && q.volume[i]) || 0)
+              });
+            }
+          }
+          if (bars.length >= 60) return { symbol: sym, bars };
+        } catch (e) {}
+      }
+    }
+    throw new Error('無法取得完整60日行情');
+  }
+
+  function analyzeStockBars(symbol, bars) {
+    const n = bars.length;
+    const avgClose = (endIdx, win) => {
+      let s = 0;
+      for (let i = endIdx - win + 1; i <= endIdx; i++) s += bars[i].close;
+      return s / win;
+    };
+
+    const ma5 = avgClose(n - 1, 5);
+    const ma10 = avgClose(n - 1, 10);
+    const ma20 = avgClose(n - 1, 20);
+    const ma60 = avgClose(n - 1, 60);
+    const ma20Prev5 = n >= 26 ? avgClose(n - 6, 20) : avgClose(n - 2, 20);
+    const ma20Up = ma20 > ma20Prev5;
+
+    let volSum20 = 0;
+    for (let i = n - 20; i < n; i++) volSum20 += bars[i].volume;
+    const volMa20 = volSum20 / 20;
+    const volRatio = volMa20 > 0 ? bars[n - 1].volume / volMa20 : 1.0;
+
+    let kPrev = 50.0, dPrev = 50.0, kNow = 50.0, dNow = 50.0, kYesterday = 50.0, dYesterday = 50.0;
+    for (let i = 0; i < n; i++) {
+      let rsv = 50.0;
+      if (i >= 8) {
+        let low9 = Infinity, high9 = -Infinity;
+        for (let j = i - 8; j <= i; j++) {
+          if (bars[j].low < low9) low9 = bars[j].low;
+          if (bars[j].high > high9) high9 = bars[j].high;
+        }
+        if (high9 > low9) rsv = ((bars[i].close - low9) / (high9 - low9)) * 100.0;
+      }
+      kNow = (2.0 / 3.0) * kPrev + (1.0 / 3.0) * rsv;
+      dNow = (2.0 / 3.0) * dPrev + (1.0 / 3.0) * kNow;
+      if (i === n - 2) { kYesterday = kNow; dYesterday = dNow; }
+      kPrev = kNow; dPrev = dNow;
+    }
+
+    const cur = bars[n - 1];
+    const prev = bars[n - 2];
+    const chgPct = ((cur.close - prev.close) / prev.close) * 100.0;
+    const bias60 = ((cur.close - ma60) / ma60) * 100.0;
+
+    const bullMa = (cur.close > ma20) && (cur.close > ma60) && (ma20 > ma60) && ma20Up;
+    const fullBullMa = (cur.close > ma5) && (ma5 > ma10) && (ma10 > ma20) && (ma20 > ma60) && ma20Up;
+
+    let momSignal = '🟡 續抱 / 觀察', momBadge = 'badge-amber', momType = 'neutral';
+    const momReasons = [];
+
+    if (cur.close < ma20) {
+      momSignal = '🔴 波段停損 / 清倉'; momBadge = 'badge-red'; momType = 'warn';
+      momReasons.push('收盤跌破 20 日月線支撐');
+    } else if (cur.close < ma5 && cur.close < ma10) {
+      momSignal = '🟠 短線移動停利'; momBadge = 'badge-amber'; momType = 'warn';
+      momReasons.push('跌破 5 日與 10 日短期均線');
+    } else if (kYesterday >= 80.0 && kNow < dNow && kYesterday >= dYesterday) {
+      momSignal = '🟠 高檔死叉停利'; momBadge = 'badge-amber'; momType = 'warn';
+      momReasons.push(`KD 於 80 以上超買區死叉 (K:${kNow.toFixed(1)})`);
+    } else if (volRatio >= 2.0 && cur.close < cur.open && cur.close < prev.close) {
+      momSignal = '🟠 爆量黑K警戒'; momBadge = 'badge-amber'; momType = 'warn';
+      momReasons.push(`高檔爆出 ${volRatio.toFixed(2)} 倍量收黑`);
+    } else if (bullMa && (kNow > dNow) && (kNow >= 45.0 && kNow <= 82.0) && (volRatio >= 1.15)) {
+      momSignal = '🟢 強勢波段買進'; momBadge = 'badge-green'; momType = 'buy';
+      momReasons.push(fullBullMa ? '均線全面多頭排列 (5>10>20>60)' : '站穩月季線且月線翻揚');
+      momReasons.push(kYesterday <= dYesterday ? `KD 中軸上方金叉 (K:${kNow.toFixed(1)})` : `KD 多頭強勢 (K:${kNow.toFixed(1)})`);
+      momReasons.push(`量比放大 ${volRatio.toFixed(2)}x`);
+    } else {
+      momReasons.push(bullMa ? '均線維持多頭，等待量增或 KD 轉強' : '尚未形成完整多頭排列');
+    }
+
+    let dipSignal = '⚪ 定期定額續扣', dipBadge = '', dipType = 'neutral';
+    const dipReasons = [];
+
+    if ((bias60 >= 12.0 && kNow >= 75.0 && kNow < dNow) || (kYesterday >= 82.0 && kNow < dNow && kYesterday >= dYesterday)) {
+      dipSignal = '🟠 波段達標停利循環'; dipBadge = 'badge-amber'; dipType = 'warn';
+      dipReasons.push(`季線正乖離 ${bias60 >= 0 ? '+' : ''}${bias60.toFixed(1)}% 且 KD 高檔轉弱`);
+    } else if ((cur.close <= ma60 * 1.015 || bias60 <= -2.0) && (kNow <= 35.0) && (kNow > dNow || kNow > kYesterday)) {
+      dipSignal = '🟢 逢回低接買點'; dipBadge = 'badge-green'; dipType = 'buy';
+      dipReasons.push(`回測季線支撐 (乖離 ${bias60 >= 0 ? '+' : ''}${bias60.toFixed(1)}%)`);
+      dipReasons.push(kNow > dNow && kYesterday <= dYesterday ? `KD 低檔超賣金叉 (K:${kNow.toFixed(1)})` : `KD 低檔止跌勾頭 (K:${kNow.toFixed(1)})`);
+    } else {
+      dipReasons.push(cur.close < ma60 && kNow < 30.0
+        ? `跌破季線且 KD 超賣 (${kNow.toFixed(1)})，靜待 KD 金叉`
+        : `位階中性 (季線乖離 ${bias60 >= 0 ? '+' : ''}${bias60.toFixed(1)}%)`);
+    }
+
+    return {
+      symbol, date: cur.date, close: cur.close, chgPct,
+      ma5, ma10, ma20, ma60, bias60, kNow, dNow, volRatio,
+      momSignal, momBadge, momType, momReasons: momReasons.join('；'),
+      dipSignal, dipBadge, dipType, dipReasons: dipReasons.join('；')
+    };
+  }
+
+  async function runWatchlistScan() {
+    const list = getScanWatchlist();
+    const container = document.getElementById('scannerCardsContainer');
+    const status = document.getElementById('scanStatusText');
+    const btn = document.getElementById('btnRunScan');
+
+    if (list.length === 0) {
+      container.innerHTML = '<div style="text-align:center; color:#94a3b8; padding:16px;">自選股清單為空，請在上方輸入代號新增</div>';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = '掃描中...';
+    status.textContent = `正在抓取 ${list.length} 檔行情...`;
+    status.style.color = 'var(--primary)';
+
+    let momBuy = 0, dipBuy = 0, warnCnt = 0;
+    latestScanResults = {};
+    const cardsHtml = [];
+
+    for (const code of list) {
+      try {
+        const { symbol, bars } = await fetchSingleStockHistory(code);
+        const r = analyzeStockBars(symbol, bars);
+        latestScanResults[code] = r;
+
+        if (r.momType === 'buy') momBuy++;
+        if (r.dipType === 'buy') dipBuy++;
+        if (r.momType === 'warn' || r.dipType === 'warn') warnCnt++;
+
+        const chgCls = r.chgPct >= 0 ? 'pos' : 'neg';
+        const biasCls = r.bias60 >= 0 ? 'pos' : 'neg';
+        const dipBadgeHtml = r.dipBadge
+          ? `<span class="badge ${r.dipBadge}">${r.dipSignal}</span>`
+          : `<span style="font-weight:700; color:#475569; font-size:12px;">${r.dipSignal}</span>`;
+
+        cardsHtml.push(`
+          <div class="mobile-list-card">
+            <div class="ml-top">
+              <div>
+                <strong style="font-size:16px; color:var(--navy);">${r.symbol}</strong>
+                <span style="font-size:11.5px; color:var(--text-muted); margin-left:4px;">${r.date}</span>
+              </div>
+              <div style="text-align:right;">
+                <strong style="font-size:16px;">${fmtDec(r.close, 2)}</strong>
+                <span class="${chgCls}" style="font-size:12.5px; margin-left:4px;">${r.chgPct >= 0 ? '+' : ''}${r.chgPct.toFixed(2)}%</span>
+              </div>
+            </div>
+
+            <div class="ml-row">
+              <span>5日: <strong>${fmtDec(r.ma5, 1)}</strong> ｜ 10日: <strong>${fmtDec(r.ma10, 1)}</strong></span>
+              <span>KD: <strong>${r.kNow.toFixed(1)}</strong> / ${r.dNow.toFixed(1)}</span>
+            </div>
+            <div class="ml-row">
+              <span>20日: <strong>${fmtDec(r.ma20, 1)}</strong> ｜ 60日: <strong>${fmtDec(r.ma60, 1)}</strong> (<span class="${biasCls}">${r.bias60 >= 0 ? '+' : ''}${r.bias60.toFixed(1)}%</span>)</span>
+              <span>量比: <strong style="color:${r.volRatio >= 1.15 ? 'var(--emerald)' : '#475569'}">${r.volRatio.toFixed(2)}x</strong></span>
+            </div>
+
+            <div style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:8px; margin-top:6px;">
+              <div style="margin-bottom:6px;">
+                <span class="badge ${r.momBadge}">${r.momSignal}</span>
+                <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">${r.momReasons}</div>
+              </div>
+              <div style="border-top:1px dashed #e2e8f0; padding-top:6px;">
+                ${dipBadgeHtml}
+                <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">${r.dipReasons}</div>
+              </div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; gap:8px; margin-top:8px;">
+              <button class="btn btn-sm" style="color:var(--rose);" onclick="removeScanTicker('${code}')">移除</button>
+              <button class="btn btn-primary btn-sm" style="flex:1;" onclick="sendScanToCheck('${code}')">帶入「三步驟檢核」→</button>
+            </div>
+          </div>
+        `);
+      } catch (err) {
+        cardsHtml.push(`
+          <div class="mobile-list-card">
+            <div class="ml-top">
+              <strong>${code}</strong>
+              <button class="btn btn-sm" style="color:var(--rose);" onclick="removeScanTicker('${code}')">移除</button>
+            </div>
+            <div style="color:var(--rose); font-size:12.5px;">⚠️ 無法取得完整 60 日行情（${err.message}）</div>
+          </div>
+        `);
+      }
+    }
+
+    container.innerHTML = cardsHtml.join('');
+    document.getElementById('scanMomBuyCount').textContent = `${momBuy} 檔`;
+    document.getElementById('scanDipBuyCount').textContent = `${dipBuy} 檔`;
+    document.getElementById('scanWarnCount').textContent = `${warnCnt} 檔`;
+
+    const tStr = new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+    status.textContent = `✅ 掃描完成 (${tStr})`;
+    status.style.color = 'var(--emerald)';
+    btn.disabled = false;
+    btn.textContent = '🔄 立即掃描';
+    scannerHasRunOnce = true;
+  }
+
+  function sendScanToCheck(code) {
+    const r = latestScanResults[code];
+    document.getElementById('chkTicker').value = r ? `${r.symbol} (收盤 ${fmtDec(r.close, 2)})` : code;
+    const isDipFocus = r && (r.dipType === 'buy' || code.startsWith('00'));
+    document.getElementById('chkRole').value = isDipFocus ? '存股領息（時間財）' : '強勢波段（機會財）';
+
+    const chks = Array.from(document.querySelectorAll('.step-chk'));
+    chks.forEach(c => c.checked = false);
+    if (r && (r.momType === 'buy' || r.dipType === 'buy')) {
+      chks[3].checked = true;
+      chks[4].checked = true;
+      chks[5].checked = true;
+    }
+    updateTabCheck();
+    switchTab('tab_check', document.querySelectorAll('.nav-btn')[5], '6. 買賣檢核');
+  }
+
+  function updateTabCheck() {
+    const chks = Array.from(document.querySelectorAll('.step-chk'));
+    const checkedCount = chks.filter(c => c.checked).length;
+    const s1 = chks.filter(c => c.dataset.step === '1' && c.checked).length;
+    const box = document.getElementById('verdictBox');
+    const txt = document.getElementById('verdictText');
+
+    if (checkedCount >= 8 && s1 === 3) {
+      box.style.background = 'var(--emerald-bg)';
+      box.style.color = 'var(--emerald)';
+      txt.textContent = `🟢 三步驟高度吻合（${checkedCount}/9 項）：可依計畫分批執行！`;
+    } else if (s1 >= 2 && checkedCount >= 4) {
+      box.style.background = 'var(--amber-bg)';
+      box.style.color = 'var(--amber)';
+      txt.textContent = `🟡 納入選股池觀察（${checkedCount}/9 項）：基本面已過關，耐心等待技術買點。`;
+    } else {
+      box.style.background = 'var(--rose-bg)';
+      box.style.color = 'var(--rose)';
+      txt.textContent = `🔴 暫緩進場（${checkedCount}/9 項）：條件尚未齊全，切勿衝動下單。`;
+    }
+  }
+
+  function saveDecisionLog() {
+    const ticker = document.getElementById('chkTicker').value.trim() || '未命名標的';
+    const role = document.getElementById('chkRole').value;
+    const checkedCount = Array.from(document.querySelectorAll('.step-chk')).filter(c => c.checked).length;
+    const verdict = document.getElementById('verdictText').textContent;
+    const timeStr = new Date().toLocaleString('zh-TW', { hour12: false });
+
+    const logs = JSON.parse(safeStorage.getItem('wealth_decision_logs') || '[]');
+    logs.unshift({ timeStr, ticker, role, score: `${checkedCount}/9`, verdict });
+    safeStorage.setItem('wealth_decision_logs', JSON.stringify(logs.slice(0, 30)));
+    renderLogs();
+  }
+
+  function clearLogs() {
+    safeStorage.removeItem('wealth_decision_logs');
+    renderLogs();
+  }
+
+  function renderLogs() {
+    const logs = JSON.parse(safeStorage.getItem('wealth_decision_logs') || '[]');
+    const container = document.getElementById('decisionLogsContainer');
+    if (logs.length === 0) {
+      container.innerHTML = '<div style="text-align:center; color:#94a3b8; padding:14px; font-size:13px;">尚無儲存的決策紀錄</div>';
+      return;
+    }
+    container.innerHTML = logs.map(l => `
+      <div class="mobile-list-card" style="padding:10px 12px;">
+        <div class="ml-top">
+          <strong>${l.ticker}</strong>
+          <span style="font-size:11px; color:var(--text-muted);">${l.timeStr}</span>
+        </div>
+        <div style="font-size:12px; color:#475569; margin-bottom:4px;">${l.role} ｜ 通過 ${l.score} 項</div>
+        <div style="font-size:12.5px; font-weight:700;">${l.verdict}</div>
+      </div>
+    `).join('');
+  }
+
+  recalcFromMetrics();
+  updateTabAlloc();
+  updateTabIRR();
+  updateTabDCA();
+  renderLogs();
+  fetchLiveMarketData();
+</script>
+</body>
+</html>
