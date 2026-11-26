@@ -654,7 +654,7 @@
   <section id="tab_dca" class="panel">
     <div class="card">
       <h2>ETF「停利不停扣」優化策略回測</h2>
-      <p class="card-desc">支援「留底倉減碼」、「均線護城河」與「回檔倒回低接」，圖表同步標示買賣點。</p>
+      <p class="card-desc">支援「留底倉減碼」、「3:5:2 分批低接」、「現金停泊生息」與「半年線護城河」。</p>
 
       <div class="grid-2" style="margin-bottom:10px;">
         <div>
@@ -667,7 +667,7 @@
         </div>
         <div>
           <label>停利目標報酬率（%）</label>
-          <input type="number" id="tpTarget" value="20" step="1" min="5" max="100" oninput="updateTabDCA()">
+          <input type="number" id="tpTarget" value="25" step="1" min="5" max="100" oninput="updateTabDCA()">
         </div>
         <div>
           <label>回測標的 / 行情劇本</label>
@@ -684,29 +684,33 @@
       </div>
 
       <div style="background:var(--surface-alt); border:1px solid #dbeafe; border-radius:10px; padding:10px; margin-bottom:10px;">
-        <div style="font-size:12.5px; font-weight:700; color:var(--primary); margin-bottom:8px;">🎛️ 策略優化開關（解決清倉母金與現金閒置）</div>
+        <div style="font-size:12.5px; font-weight:700; color:var(--primary); margin-bottom:8px;">🎛️ 策略優化開關</div>
         <div class="grid-2" style="gap:8px; margin-bottom:8px;">
           <div>
             <label>① 每次停利賣出比例</label>
             <select id="tpSellRatio" onchange="updateTabDCA()">
-              <option value="50" selected>賣出 50%（保留一半底倉續滾）</option>
-              <option value="30">賣出 30%（保留 70% 核心底倉）</option>
-              <option value="100">賣出 100%（傳統全數清倉）</option>
+              <option value="50" selected>賣出 50%（留一半底倉）</option>
+              <option value="30">賣出 30%（留 70% 底倉）</option>
+              <option value="100">賣出 100%（傳統全清）</option>
             </select>
           </div>
           <div>
-            <label>② 高點回檔低接門檻</label>
+            <label>② 3:5:2 回檔低接門檻</label>
             <select id="dipBuyPct" onchange="updateTabDCA()">
-              <option value="10" selected>分3批(3:5:2)：每跌 10% 加碼 (-10%/-20%/-30%)</option>
-              <option value="8">分3批(3:5:2)：每跌 8% 加碼 (-8%/-16%/-24%)</option>
-              <option value="12">分3批(3:5:2)：每跌 12% 加碼 (-12%/-24%/-36%)</option>
-              <option value="0">關閉（落袋現金只出不進）</option>
+              <option value="10" selected>分3批：每跌 10% 加碼</option>
+              <option value="8">分3批：每跌 8% 加碼</option>
+              <option value="12">分3批：每跌 12% 加碼</option>
+              <option value="0">關閉（現金只出不進）</option>
             </select>
           </div>
         </div>
+        <div style="margin-bottom:8px;">
+          <label>③ 保留現金停泊年化利率（%，如高利活存 / 短債）</label>
+          <input type="number" id="cashYieldRate" value="2.0" step="0.1" min="0" max="15" oninput="updateTabDCA()">
+        </div>
         <label class="check-item" style="padding:2px 0; font-size:12.5px;">
           <input type="checkbox" id="useMaGuard" checked onchange="updateTabDCA()">
-          <span>③ <strong>啟用半年線護城河</strong>：站穩 6 個月均線時續抱不設限，跌破均線轉弱才執行停利</span>
+          <span>④ <strong>啟用半年線護城河</strong>：站穩 6 個月均線續抱，跌破轉弱才減碼</span>
         </label>
       </div>
 
@@ -723,7 +727,7 @@
         <div class="kpi-box">
           <div class="kpi-label">優化策略期末總資產</div>
           <div class="kpi-val" id="tpFinalVal" style="color:var(--primary)">-</div>
-          <div class="kpi-sub" id="tpTriggerInfo">減碼 0 次 / 低接 0 次</div>
+          <div class="kpi-sub" id="tpTriggerInfo">停利 0 次 / 低接 0 次</div>
         </div>
         <div class="kpi-box">
           <div class="kpi-label">單純抱上抱下資產</div>
@@ -1625,16 +1629,16 @@
     realDcaFetching[code] = true;
 
     try {
-      const sym = `${code}.TW`;
-      const targetUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?range=15y&interval=1mo`;
+      const sym = code + '.TW';
+      const targetUrl = 'https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(sym) + '?range=15y&interval=1mo';
       const loaders = [
         async () => {
-          const r = await fetchWithTimeout(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`, 8000);
+          const r = await fetchWithTimeout('https://api.allorigins.win/get?url=' + encodeURIComponent(targetUrl), 8000);
           const w = await r.json();
           return JSON.parse(w.contents);
         },
         async () => {
-          const r = await fetchWithTimeout(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`, 8000);
+          const r = await fetchWithTimeout('https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(targetUrl), 8000);
           return await r.json();
         }
       ];
@@ -1663,7 +1667,7 @@
       }
 
       const start10y = getPastDateStr(3650);
-      const fmUrl = `https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockPrice&data_id=${encodeURIComponent(code)}&start_date=${start10y}`;
+      const fmUrl = 'https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockPrice&data_id=' + encodeURIComponent(code) + '&start_date=' + start10y;
       const fmRes = await fetchWithTimeout(fmUrl, 8500);
       if (fmRes.ok) {
         const fmJson = await fmRes.json();
@@ -1699,9 +1703,10 @@
   function updateTabDCA() {
     const monthly = Math.max(1000, parseFloat(document.getElementById('dcaAmt').value) || 10000);
     const reqMonths = Math.min(180, Math.max(12, parseInt(document.getElementById('dcaMonths').value, 10) || 108));
-    const targetPct = Math.max(1, parseFloat(document.getElementById('tpTarget').value) || 20) / 100;
+    const targetPct = Math.max(1, parseFloat(document.getElementById('tpTarget').value) || 25) / 100;
     const sellRatio = Math.min(1, Math.max(0.1, (parseFloat(document.getElementById('tpSellRatio').value) || 50) / 100));
     const dipStepPct = Math.max(0, parseFloat(document.getElementById('dipBuyPct').value) || 0) / 100;
+    const cashAnnualRate = Math.max(0, parseFloat(document.getElementById('cashYieldRate').value) || 0) / 100;
     const useMaGuard = document.getElementById('useMaGuard').checked;
     const scenario = document.getElementById('marketScenario').value;
     const infoBox = document.getElementById('dcaRealInfo');
@@ -1754,8 +1759,9 @@
     }
 
     const months = series.length;
+    const monthlyCashRate = cashAnnualRate / 12;
     let bhShares = 0;
-    let optShares = 0, optCostBasis = 0, lockedCash = 0;
+    let optShares = 0, optCostBasis = 0, lockedCash = 0, totalInterest = 0;
     let peakPrice = series[0].price;
     let lastBuyIdx = -99, lastSellIdx = -99;
     let dipStage = 0;
@@ -1767,15 +1773,26 @@
 
     for (let m = 0; m < months; m++) {
       const p = series[m].price;
+
+      // 1. 保留現金按月複利計息
+      if (m > 0 && lockedCash > 0 && monthlyCashRate > 0) {
+        const interest = lockedCash * monthlyCashRate;
+        lockedCash += interest;
+        totalInterest += interest;
+      }
+
+      // 2. 突破波段前高時，重置 3:5:2 低接批次計數器
       if (p > peakPrice) {
         peakPrice = p;
         dipStage = 0;
         dipPoolBase = 0;
       }
 
+      // 3. 單純抱上抱下基準線
       bhShares += monthly / p;
       curveBH.push(bhShares * p);
 
+      // 4. 每月定期定額買進
       optShares += monthly / p;
       optCostBasis += monthly;
 
@@ -1786,6 +1803,8 @@
         ma6 = sum6 / 6;
       }
 
+      // 5. 3:5:2 逆勢分三批低接（第1批 -10% 投 30% -> 隔2月以上 -20% 投 50% -> 隔2月以上 -30% 投 20%）
+      let didBuyThisMonth = false;
       const drawdown = (peakPrice - p) / peakPrice;
       const targetDrawdown = dipStepPct * (dipStage + 1);
       const timeGapOk = (dipStage === 0) ? true : (m - lastBuyIdx >= 2);
@@ -1806,6 +1825,7 @@
           dipStage++;
           dipBuyCount++;
           lastBuyIdx = m;
+          didBuyThisMonth = true;
           buyEvents.push({
             idx: m,
             date: series[m].date,
@@ -1819,17 +1839,16 @@
         }
       }
 
+      // 6. 停利減碼出場（與低接同月互斥，且不重置尚未走完的回檔批次）
       const curMarketVal = optShares * p;
       const unrealRet = optCostBasis > 0 ? (curMarketVal - optCostBasis) / optCostBasis : 0;
       const trendAllowsExit = !useMaGuard || (p < ma6) || (unrealRet >= targetPct * 2.5);
 
-      if (unrealRet >= targetPct && trendAllowsExit && (m - lastSellIdx >= 2)) {
+      if (!didBuyThisMonth && unrealRet >= targetPct && trendAllowsExit && (m - lastSellIdx >= 2) && (m - lastBuyIdx >= 2)) {
         const soldVal = curMarketVal * sellRatio;
         lockedCash += soldVal;
         optShares = optShares * (1 - sellRatio);
         optCostBasis = optCostBasis * (1 - sellRatio);
-        dipStage = 0;
-        dipPoolBase = 0;
         tpCount++;
         lastSellIdx = m;
         tpEvents.push({
@@ -1859,7 +1878,7 @@
     document.getElementById('bhReturnInfo').textContent = '總報酬率 ' + (((finalBH - principal)/principal)*100).toFixed(1) + '%';
     document.getElementById('dcaDiff').className = 'kpi-val ' + (diff >= 0 ? 'pos' : 'neg');
     document.getElementById('dcaDiff').textContent = (diff >= 0 ? '+' : '') + fmtMoney(diff);
-    document.getElementById('tpLockedCash').textContent = '帳上保留現金：' + fmtMoney(lockedCash);
+    document.getElementById('tpLockedCash').textContent = '保留現金：' + fmtMoney(lockedCash) + (totalInterest > 0 ? ' (含息 +' + fmtMoney(totalInterest) + ')' : '');
 
     if (infoBox) {
       const pStart = series[0].price;
@@ -1898,19 +1917,19 @@
     const mapY = v => padT + ((maxV - v) / maxV) * plotH;
     const mapPriceY = p => padT + ((maxP - p) / spanP) * plotH;
 
-    const pathOpt = curveOpt.map((v, i) => `${i === 0 ? 'M' : 'L'}${mapX(i).toFixed(1)},${mapY(v).toFixed(1)}`).join(' ');
-    const pathBH = curveBH.map((v, i) => `${i === 0 ? 'M' : 'L'}${mapX(i).toFixed(1)},${mapY(v).toFixed(1)}`).join(' ');
-    const pathPrice = series.map((s, i) => `${i === 0 ? 'M' : 'L'}${mapX(i).toFixed(1)},${mapPriceY(s.price).toFixed(1)}`).join(' ');
-    const areaPrice = `${pathPrice} L${mapX(n - 1).toFixed(1)},${(padT + plotH).toFixed(1)} L${padL},${(padT + plotH).toFixed(1)} Z`;
+    const pathOpt = curveOpt.map((v, i) => (i === 0 ? 'M' : 'L') + mapX(i).toFixed(1) + ',' + mapY(v).toFixed(1)).join(' ');
+    const pathBH = curveBH.map((v, i) => (i === 0 ? 'M' : 'L') + mapX(i).toFixed(1) + ',' + mapY(v).toFixed(1)).join(' ');
+    const pathPrice = series.map((s, i) => (i === 0 ? 'M' : 'L') + mapX(i).toFixed(1) + ',' + mapPriceY(s.price).toFixed(1)).join(' ');
+    const areaPrice = pathPrice + ' L' + mapX(n - 1).toFixed(1) + ',' + (padT + plotH).toFixed(1) + ' L' + padL + ',' + (padT + plotH).toFixed(1) + ' Z';
 
     let grid = '';
     for (let k = 0; k <= 4; k++) {
       const val = (maxV / 4) * k;
       const y = mapY(val);
       const pVal = minP + (spanP / 4) * k;
-      grid += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W - padR}" y2="${y.toFixed(1)}" stroke="#e2e8f0" stroke-width="1"/>`;
-      grid += `<text x="${padL - 6}" y="${(y + 4).toFixed(1)}" text-anchor="end" font-size="11" fill="#64748b">$${Math.round(val / 10000)}萬</text>`;
-      grid += `<text x="${W - padR + 6}" y="${(y + 4).toFixed(1)}" text-anchor="start" font-size="10.5" fill="#d97706">$${pVal.toFixed(0)}</text>`;
+      grid += '<line x1="' + padL + '" y1="' + y.toFixed(1) + '" x2="' + (W - padR) + '" y2="' + y.toFixed(1) + '" stroke="#e2e8f0" stroke-width="1"/>';
+      grid += '<text x="' + (padL - 6) + '" y="' + (y + 4).toFixed(1) + '" text-anchor="end" font-size="11" fill="#64748b">$' + Math.round(val / 10000) + '萬</text>';
+      grid += '<text x="' + (W - padR + 6) + '" y="' + (y + 4).toFixed(1) + '" text-anchor="start" font-size="10.5" fill="#d97706">$' + pVal.toFixed(0) + '</text>';
     }
 
     let xLabels = '';
@@ -1918,39 +1937,35 @@
     for (let t = 0; t < tickCount; t++) {
       const idx = Math.round((t / Math.max(1, tickCount - 1)) * (n - 1));
       const x = mapX(idx);
-      xLabels += `<text x="${x.toFixed(1)}" y="${H - 10}" text-anchor="middle" font-size="10.5" fill="#64748b">${series[idx].date}</text>`;
+      xLabels += '<text x="' + x.toFixed(1) + '" y="' + (H - 10) + '" text-anchor="middle" font-size="10.5" fill="#64748b">' + series[idx].date + '</text>';
     }
 
     const sellDots = tpEvents.map(ev => {
       const cx = mapX(ev.idx).toFixed(1);
       const cy = mapY(ev.totalAsset).toFixed(1);
-      return `<circle cx="${cx}" cy="${cy}" r="5" fill="#ea580c" stroke="#ffffff" stroke-width="1.5"/>`;
+      return '<circle cx="' + cx + '" cy="' + cy + '" r="5" fill="#ea580c" stroke="#ffffff" stroke-width="1.5"/>';
     }).join('');
 
     const buyDots = buyEvents.map(ev => {
       const cx = mapX(ev.idx).toFixed(1);
       const cy = mapY(ev.totalAsset).toFixed(1);
-      return `<circle cx="${cx}" cy="${cy}" r="5.5" fill="#059669" stroke="#ffffff" stroke-width="1.5"/>`;
+      return '<circle cx="' + cx + '" cy="' + cy + '" r="5.5" fill="#059669" stroke="#ffffff" stroke-width="1.5"/>';
     }).join('');
 
     const shortLabel = labelTitle.split(' ')[0];
-    svg.innerHTML = `
-      ${grid}
-      ${xLabels}
-      <path d="${areaPrice}" fill="rgba(245, 158, 11, 0.09)"/>
-      <path d="${pathPrice}" fill="none" stroke="#f59e0b" stroke-width="2"/>
-      <path d="${pathBH}" fill="none" stroke="#94a3b8" stroke-width="2.2" stroke-dasharray="5,4"/>
-      <path d="${pathOpt}" fill="none" stroke="#2563eb" stroke-width="2.8"/>
-      ${sellDots}
-      ${buyDots}
-      <g transform="translate(${padL}, 12)">
-        <rect x="0" y="0" width="12" height="3" fill="#2563eb"/><text x="16" y="4" font-size="11" font-weight="700" fill="#0f172a">優化策略總資產</text>
-        <rect x="118" y="0" width="12" height="3" fill="#94a3b8"/><text x="134" y="4" font-size="11" fill="#475569">抱上抱下</text>
-        <rect x="192" y="0" width="12" height="3" fill="#f59e0b"/><text x="208" y="4" font-size="11" font-weight="700" fill="#b45309">${shortLabel}股價</text>
-        <circle cx="282" cy="1.5" r="4" fill="#ea580c"/><text x="290" y="4" font-size="11" fill="#c2410c">停利減碼</text>
-        <circle cx="354" cy="1.5" r="4" fill="#059669"/><text x="362" y="4" font-size="11" fill="#047857">回檔低接</text>
-      </g>
-    `;
+    svg.innerHTML = grid + xLabels
+      + '<path d="' + areaPrice + '" fill="rgba(245, 158, 11, 0.09)"/>'
+      + '<path d="' + pathPrice + '" fill="none" stroke="#f59e0b" stroke-width="2"/>'
+      + '<path d="' + pathBH + '" fill="none" stroke="#94a3b8" stroke-width="2.2" stroke-dasharray="5,4"/>'
+      + '<path d="' + pathOpt + '" fill="none" stroke="#2563eb" stroke-width="2.8"/>'
+      + sellDots + buyDots
+      + '<g transform="translate(' + padL + ', 12)">'
+      + '<rect x="0" y="0" width="12" height="3" fill="#2563eb"/><text x="16" y="4" font-size="11" font-weight="700" fill="#0f172a">優化策略總資產</text>'
+      + '<rect x="118" y="0" width="12" height="3" fill="#94a3b8"/><text x="134" y="4" font-size="11" fill="#475569">抱上抱下</text>'
+      + '<rect x="192" y="0" width="12" height="3" fill="#f59e0b"/><text x="208" y="4" font-size="11" font-weight="700" fill="#b45309">' + shortLabel + '股價</text>'
+      + '<circle cx="282" cy="1.5" r="4" fill="#ea580c"/><text x="290" y="4" font-size="11" fill="#c2410c">停利減碼</text>'
+      + '<circle cx="354" cy="1.5" r="4" fill="#059669"/><text x="362" y="4" font-size="11" fill="#047857">回檔低接</text>'
+      + '</g>';
   }
 
   let scannerHasRunOnce = false;
